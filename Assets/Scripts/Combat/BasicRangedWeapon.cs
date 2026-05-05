@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 public class BasicRangedWeapon : WeaponBase
 {
+    private bool alternateSpreadSide = true;
     private float weaponDamageMultiplier = 1f;
     [Header("Proyectil")]
     public GameObject bulletPrefab;
@@ -75,21 +76,33 @@ public class BasicRangedWeapon : WeaponBase
             playerStats.rangedDamageMultiplier
         );
 
+        // Siempre disparamos una bala directa al centro del enemigo
+        SpawnBullet(baseDirection, finalDamage);
+
+        // Si solo hay una bala, terminamos aquí
         if (projectileCount <= 1)
         {
-            SpawnBullet(baseDirection, finalDamage);
             return;
         }
 
-        float totalSpread = spreadAngle * (projectileCount - 1);
-        float startAngle = -totalSpread / 2f;
+        int extraProjectiles = projectileCount - 1;
 
-        for (int i = 0; i < projectileCount; i++)
+        // Para que con 2 balas no siempre se vaya hacia el mismo lado
+        int firstSide = alternateSpreadSide ? 1 : -1;
+
+        for (int i = 0; i < extraProjectiles; i++)
         {
-            float currentAngle = startAngle + (spreadAngle * i);
+            int side = (i % 2 == 0) ? firstSide : -firstSide;
+            int spreadStep = (i / 2) + 1;
+
+            float currentAngle = spreadAngle * spreadStep * side;
+
             Vector2 newDirection = RotateVector(baseDirection, currentAngle);
+
             SpawnBullet(newDirection, finalDamage);
         }
+
+        alternateSpreadSide = !alternateSpreadSide;
     }
 
     void SpawnBullet(Vector2 direction, int damage)
