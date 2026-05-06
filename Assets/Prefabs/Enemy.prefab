@@ -75,7 +75,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMelee
   target: {fileID: 0}
-  moveSpeed: 3
+  moveSpeed: 2.5
   separationRadius: 0.6
   separationStrength: 0.6
   enemyLayer:
@@ -258,9 +258,4 @@ MonoBehaviour:
   player: {fileID: 0}
   maxDistanceFromPlayer: 24
   respawnDistance: 14
-  clusterRadius: 2.5
-  maxNearbyEnemies: 10
-  enemyLayer:
-    serializedVersion: 2
-    m_Bits: 0
   checkInterval: 1.5

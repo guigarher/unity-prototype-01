@@ -248,7 +248,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyRanged
   target: {fileID: 0}
-  moveSpeed: 2.4
+  moveSpeed: 2
   preferredDistance: 5
   tooCloseDistance: 3
   attackRange: 7

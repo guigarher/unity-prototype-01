@@ -5,12 +5,19 @@ public class Coin : MonoBehaviour
     public int value = 1;
     public float moveSpeed = 6f;
 
+    [Header("Recogida")]
+    public float pickupDelay = 0.5f;
+
+    private float pickupDelayTimer;
+
     private Transform player;
     private PlayerCurrency playerCurrency;
     private PlayerStats stats;
 
     void Start()
     {
+        pickupDelayTimer = pickupDelay;
+
         GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
 
         if (playerObject == null)
@@ -26,6 +33,12 @@ public class Coin : MonoBehaviour
 
     void Update()
     {
+        if (pickupDelayTimer > 0f)
+        {
+            pickupDelayTimer -= Time.deltaTime;
+            return;
+        }
+
         if (player == null || stats == null) return;
 
         float distance = Vector2.Distance(transform.position, player.position);
@@ -38,6 +51,17 @@ public class Coin : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        TryCollect(collision);
+    }
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        TryCollect(collision);
+    }
+
+    void TryCollect(Collider2D collision)
+    {
+        if (pickupDelayTimer > 0f) return;
         if (!collision.CompareTag("Player")) return;
 
         if (playerCurrency != null)
