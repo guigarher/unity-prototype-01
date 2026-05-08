@@ -2,20 +2,21 @@ using UnityEngine;
 
 public class RewardChest : MonoBehaviour
 {
-    [Header("Prefabs")]
-    public GameObject xpOrbPrefab;
+    [Header("Recompensa principal")]
+    public bool giveFullLevel = true;
+
+    [Header("Monedas")]
     public GameObject coinPrefab;
-
-    [Header("Cantidad aleatoria")]
-    public int minXPOrbCount = 5;
-    public int maxXPOrbCount = 9;
-
     public int minCoinCount = 3;
     public int maxCoinCount = 6;
 
     [Header("Forma del drop")]
     public float dropCircleRadius = 1.2f;
     public float positionRandomness = 0.2f;
+
+    [Header("Popup")]
+    public GameObject resourcePopupPrefab;
+    public Vector3 popupOffset = new Vector3(0f, 1f, 0f);
 
     [Header("Comportamiento")]
     public bool destroyOnCollect = true;
@@ -27,20 +28,28 @@ public class RewardChest : MonoBehaviour
         if (collected) return;
         if (!other.CompareTag("Player")) return;
 
-        Collect();
+        Collect(other.gameObject);
     }
 
-    void Collect()
+    void Collect(GameObject player)
     {
         collected = true;
 
-        int xpCount = Random.Range(minXPOrbCount, maxXPOrbCount + 1);
+        if (giveFullLevel)
+        {
+            PlayerXP playerXP = player.GetComponent<PlayerXP>();
+
+            if (playerXP != null)
+            {
+                playerXP.AddExactXPForOneLevel();
+                ShowPopup("+1 nivel");
+            }
+        }
+
         int coinCount = Random.Range(minCoinCount, maxCoinCount + 1);
+        SpawnCoinsInCircle(coinCount);
 
-        SpawnDropsInCircle(xpOrbPrefab, xpCount, 0f);
-        SpawnDropsInCircle(coinPrefab, coinCount, 180f / Mathf.Max(coinCount, 1));
-
-        Debug.Log("Cofre abierto: soltó " + xpCount + " orbes de XP y " + coinCount + " monedas.");
+        Debug.Log("Cofre abierto: +1 nivel y " + coinCount + " monedas.");
 
         if (destroyOnCollect)
         {
@@ -48,9 +57,9 @@ public class RewardChest : MonoBehaviour
         }
     }
 
-    void SpawnDropsInCircle(GameObject prefab, int count, float angleOffset)
+    void SpawnCoinsInCircle(int count)
     {
-        if (prefab == null) return;
+        if (coinPrefab == null) return;
         if (count <= 0) return;
 
         float angleStep = 360f / count;
@@ -58,7 +67,7 @@ public class RewardChest : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            float angle = startAngle + angleOffset + angleStep * i;
+            float angle = startAngle + angleStep * i;
             float radians = angle * Mathf.Deg2Rad;
 
             Vector2 direction = new Vector2(
@@ -71,7 +80,25 @@ public class RewardChest : MonoBehaviour
             Vector3 spawnPosition = transform.position +
                                     (Vector3)(direction * dropCircleRadius + randomOffset);
 
-            Instantiate(prefab, spawnPosition, Quaternion.identity);
+            Instantiate(coinPrefab, spawnPosition, Quaternion.identity);
+        }
+    }
+
+    void ShowPopup(string text)
+    {
+        if (resourcePopupPrefab == null) return;
+
+        GameObject popupObject = Instantiate(
+            resourcePopupPrefab,
+            transform.position + popupOffset,
+            Quaternion.identity
+        );
+
+        ResourcePopup popup = popupObject.GetComponent<ResourcePopup>();
+
+        if (popup != null)
+        {
+            popup.Initialize(text);
         }
     }
 }

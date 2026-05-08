@@ -35,6 +35,22 @@ public class PlayerXP : MonoBehaviour
 
         Debug.Log("XP ganada: " + finalXP);
 
+        ProcessLevelUps();
+    }
+
+    public void AddExactXPForOneLevel()
+    {
+        float xpReward = xpToNextLevel;
+
+        currentXP += xpReward;
+
+        Debug.Log("Cofre: XP equivalente a 1 nivel completo: " + xpReward);
+
+        ProcessLevelUps();
+    }
+
+    void ProcessLevelUps()
+    {
         while (currentXP >= xpToNextLevel)
         {
             currentXP -= xpToNextLevel;

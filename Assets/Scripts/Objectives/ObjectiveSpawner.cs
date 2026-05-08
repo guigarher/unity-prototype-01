@@ -5,22 +5,30 @@ public class ObjectiveSpawner : MonoBehaviour
 {
     [Header("Referencias")]
     public Transform player;
-    public GameObject chestPrefab;
 
-    [Header("Tiempo")]
+    [Header("Cofres")]
+    public GameObject chestPrefab;
     public float firstChestDelay = 12f;
     public float minChestInterval = 25f;
     public float maxChestInterval = 40f;
+    public int maxActiveChests = 1;
+
+    [Header("Zonas de recursos")]
+    public GameObject resourceZonePrefab;
+    public float firstResourceZoneDelay = 18f;
+    public float minResourceZoneInterval = 35f;
+    public float maxResourceZoneInterval = 55f;
+    public int maxActiveResourceZones = 1;
 
     [Header("Distancia de aparición")]
     public float minSpawnDistance = 6f;
     public float maxSpawnDistance = 10f;
 
-    [Header("Límite")]
-    public int maxActiveChests = 1;
-
     private float chestTimer;
+    private float resourceZoneTimer;
+
     private List<GameObject> activeChests = new List<GameObject>();
+    private List<GameObject> activeResourceZones = new List<GameObject>();
 
     void Start()
     {
@@ -35,29 +43,61 @@ public class ObjectiveSpawner : MonoBehaviour
         }
 
         chestTimer = firstChestDelay;
+        resourceZoneTimer = firstResourceZoneDelay;
     }
 
     void Update()
     {
-        if (player == null || chestPrefab == null) return;
+        if (player == null) return;
 
-        CleanNullChests();
+        CleanNullObjectives();
 
-        if (activeChests.Count >= maxActiveChests)
+        if (GamePhaseManager.Instance != null && GamePhaseManager.Instance.IsNight())
         {
             return;
         }
+
+        HandleChestSpawning();
+        HandleResourceZoneSpawning();
+    }
+
+    void HandleChestSpawning()
+    {
+        if (chestPrefab == null) return;
+        if (activeChests.Count >= maxActiveChests) return;
 
         chestTimer -= Time.deltaTime;
 
         if (chestTimer <= 0f)
         {
-            SpawnChest();
+            GameObject newChest = SpawnObjective(chestPrefab);
+            activeChests.Add(newChest);
+
             chestTimer = Random.Range(minChestInterval, maxChestInterval);
+
+            Debug.Log("Ha aparecido un cofre.");
         }
     }
 
-    void SpawnChest()
+    void HandleResourceZoneSpawning()
+    {
+        if (resourceZonePrefab == null) return;
+        if (activeResourceZones.Count >= maxActiveResourceZones) return;
+
+        resourceZoneTimer -= Time.deltaTime;
+
+        if (resourceZoneTimer <= 0f)
+        {
+            GameObject newResourceZone = SpawnObjective(resourceZonePrefab);
+            activeResourceZones.Add(newResourceZone);
+
+            resourceZoneTimer = Random.Range(minResourceZoneInterval, maxResourceZoneInterval);
+
+            Debug.Log("Ha aparecido una zona de recursos.");
+        }
+    }
+
+    GameObject SpawnObjective(GameObject prefab)
     {
         Vector2 randomDirection = Random.insideUnitCircle.normalized;
 
@@ -70,16 +110,13 @@ public class ObjectiveSpawner : MonoBehaviour
 
         Vector3 spawnPosition = player.position + (Vector3)(randomDirection * distance);
 
-        GameObject newChest = Instantiate(chestPrefab, spawnPosition, Quaternion.identity);
-
-        activeChests.Add(newChest);
-
-        Debug.Log("Ha aparecido un cofre cerca. Ve a por él.");
+        return Instantiate(prefab, spawnPosition, Quaternion.identity);
     }
 
-    void CleanNullChests()
+    void CleanNullObjectives()
     {
         activeChests.RemoveAll(chest => chest == null);
+        activeResourceZones.RemoveAll(zone => zone == null);
     }
 
     void OnDrawGizmosSelected()

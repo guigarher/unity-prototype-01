@@ -49,12 +49,12 @@ public class Coin : MonoBehaviour
         transform.position += (Vector3)(direction * moveSpeed * Time.deltaTime);
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    void OnTriggerEnter2D(Collider2D collision)
     {
         TryCollect(collision);
     }
 
-    private void OnTriggerStay2D(Collider2D collision)
+    void OnTriggerStay2D(Collider2D collision)
     {
         TryCollect(collision);
     }
