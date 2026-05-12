@@ -9,6 +9,18 @@ public class LevelUpManager : MonoBehaviour
     private const int OPTION_COUNT = 4;
     private const int REROLL_COST = 5;
 
+    [Header("Control de opciones")]
+    public bool guaranteeWeaponUpgradeOption = true;
+
+    [Header("Mejoras especiales legendarias")]
+    [Range(0f, 1f)]
+    public float legendarySpecialChance = 0.75f;
+
+    public int projectileCountMinLevelsBetweenOffers = 6;
+
+    private int currentRewardLevel = 1;
+    private int lastProjectileCountOfferedLevel = -999;
+
     private PlayerStats stats;
     private PlayerHealth health;
     private PlayerCurrency currency;
@@ -79,6 +91,8 @@ public class LevelUpManager : MonoBehaviour
     {
         InitializeReferences();
 
+        currentRewardLevel = level;
+
         if (weaponManager != null && IsWeaponMilestoneLevel(level) && weaponManager.CanOfferMoreWeapons())
         {
             OpenWeaponChoiceMenu();
@@ -134,31 +148,154 @@ public class LevelUpManager : MonoBehaviour
     {
         currentOptions.Clear();
 
-        List<UpgradeOption> poolOptions = new List<UpgradeOption>();
+        List<string> normalGeneralPool = CreateUpgradePool();
+        List<string> legendaryOnlyPool = CreateLegendaryOnlyUpgradePool();
 
-        List<string> pool = CreateUpgradePool();
+        List<UpgradeOption> weaponOptions = CreateWeaponUpgradeOptions();
 
-        foreach (string id in pool)
+        // 1 opción de arma garantizada, si hay mejoras de arma disponibles.
+        if (guaranteeWeaponUpgradeOption && weaponOptions.Count > 0)
         {
-            poolOptions.Add(CreateUpgrade(id));
+            AddRandomOptionFromPool(weaponOptions, currentOptions);
         }
 
-        if (weaponManager != null)
+        // El resto son mejoras generales.
+        while (currentOptions.Count < OPTION_COUNT && normalGeneralPool.Count > 0)
         {
-            List<WeaponBase> activeWeapons = weaponManager.GetActiveWeapons();
+            UpgradeOption option = CreateRolledGeneralUpgrade(normalGeneralPool, legendaryOnlyPool);
 
-            foreach (WeaponBase weapon in activeWeapons)
+            if (option != null)
             {
-                poolOptions.AddRange(weapon.GetSpecificUpgradeOptions());
+                currentOptions.Add(option);
             }
         }
 
-        while (currentOptions.Count < OPTION_COUNT && poolOptions.Count > 0)
+        // Si por cualquier motivo faltan opciones, rellenamos con mejoras de arma.
+        while (currentOptions.Count < OPTION_COUNT && weaponOptions.Count > 0)
         {
-            int index = Random.Range(0, poolOptions.Count);
-            currentOptions.Add(poolOptions[index]);
-            poolOptions.RemoveAt(index);
+            AddRandomOptionFromPool(weaponOptions, currentOptions);
         }
+    }
+
+    List<UpgradeOption> CreateWeaponUpgradeOptions()
+    {
+        List<UpgradeOption> weaponOptions = new List<UpgradeOption>();
+
+        if (weaponManager == null) return weaponOptions;
+
+        List<WeaponBase> activeWeapons = weaponManager.GetActiveWeapons();
+
+        foreach (WeaponBase weapon in activeWeapons)
+        {
+            List<UpgradeOption> specificOptions = weapon.GetSpecificUpgradeOptions();
+
+            foreach (UpgradeOption option in specificOptions)
+            {
+                UpgradeRarity rarity = RollRarity();
+
+                option.rarity = rarity;
+                option.title = GetRarityPrefix(rarity) + " " + option.title;
+                option.description = GetWeaponUpgradeDescription(option.id, rarity, option.description);
+
+                weaponOptions.Add(option);
+            }
+        }
+
+        return weaponOptions;
+    }
+
+    string GetWeaponUpgradeDescription(string id, UpgradeRarity rarity, string fallbackDescription)
+    {
+        switch (id)
+        {
+            case "melee_weapon_damage":
+                return "Esta arma melee gana +" + Mathf.RoundToInt(GetWeaponDamageValue(rarity) * 100f) + "% de daño.";
+
+            case "melee_weapon_range":
+                return "Esta arma melee gana +" + GetWeaponRangeValue(rarity).ToString("0.##") + " de alcance.";
+
+            case "melee_weapon_speed":
+                return "Esta arma melee reduce su cooldown en " + GetWeaponCooldownReductionValue(rarity).ToString("0.##") + " segundos.";
+
+            case "ranged_weapon_damage":
+                return "Esta arma a distancia gana +" + Mathf.RoundToInt(GetWeaponDamageValue(rarity) * 100f) + "% de daño.";
+
+            case "ranged_weapon_speed":
+                return "Esta arma a distancia reduce su cooldown en " + GetWeaponRangedCooldownReductionValue(rarity).ToString("0.##") + " segundos.";
+
+            case "ranged_weapon_range":
+                return "Esta arma a distancia gana +" + GetWeaponRangedRangeValue(rarity).ToString("0.##") + " de alcance.";
+
+            case "ranged_weapon_projectile_speed":
+                return "Los proyectiles de esta arma vuelan +" + Mathf.RoundToInt(GetWeaponProjectileSpeedValue(rarity) * 100f) + "% más rápido.";
+        }
+
+        return fallbackDescription;
+    }
+
+    UpgradeOption CreateRolledGeneralUpgrade(List<string> normalGeneralPool, List<string> legendaryOnlyPool)
+    {
+        UpgradeRarity rolledRarity = RollRarity();
+
+        bool canUseLegendarySpecial =
+            rolledRarity == UpgradeRarity.Legendary &&
+            legendaryOnlyPool.Count > 0 &&
+            Random.value < legendarySpecialChance;
+
+        if (canUseLegendarySpecial)
+        {
+            int specialIndex = Random.Range(0, legendaryOnlyPool.Count);
+            string specialId = legendaryOnlyPool[specialIndex];
+
+            legendaryOnlyPool.RemoveAt(specialIndex);
+
+            if (specialId == "projectilecount")
+            {
+                lastProjectileCountOfferedLevel = currentRewardLevel;
+            }
+
+            return CreateUpgrade(specialId, UpgradeRarity.Legendary);
+        }
+
+        if (normalGeneralPool.Count <= 0) return null;
+
+        int index = Random.Range(0, normalGeneralPool.Count);
+        string id = normalGeneralPool[index];
+
+        normalGeneralPool.RemoveAt(index);
+
+        return CreateUpgrade(id, rolledRarity);
+    }
+
+    List<string> CreateLegendaryOnlyUpgradePool()
+    {
+        List<string> pool = new List<string>();
+
+        // Regeneración ahora sí es una mejora especial legendaria real.
+        pool.Add("regen");
+
+        if (weaponManager != null && weaponManager.HasActiveWeapon("ranged"))
+        {
+            bool projectileCountCanAppear =
+                currentRewardLevel - lastProjectileCountOfferedLevel >= projectileCountMinLevelsBetweenOffers;
+
+            if (projectileCountCanAppear)
+            {
+                pool.Add("projectilecount");
+            }
+        }
+
+        return pool;
+    }
+
+    void AddRandomOptionFromPool(List<UpgradeOption> sourcePool, List<UpgradeOption> destination)
+    {
+        if (sourcePool == null || sourcePool.Count == 0) return;
+
+        int index = Random.Range(0, sourcePool.Count);
+
+        destination.Add(sourcePool[index]);
+        sourcePool.RemoveAt(index);
     }
 
     void GenerateWeaponOptions()
@@ -365,7 +502,6 @@ public class LevelUpManager : MonoBehaviour
             "critmulti",
             "pickup",
             "maxhealth",
-            "regen",
             "armor",
             "dodge",
             "xpboost",
@@ -384,7 +520,6 @@ public class LevelUpManager : MonoBehaviour
             {
                 pool.Add("ranged");
                 pool.Add("projectilespeed");
-                pool.Add("projectilecount");
             }
         }
 
@@ -393,8 +528,11 @@ public class LevelUpManager : MonoBehaviour
 
     UpgradeOption CreateUpgrade(string id)
     {
-        UpgradeRarity rarity = RollRarityForUpgrade(id);
+        return CreateUpgrade(id, RollRarity());
+    }
 
+    UpgradeOption CreateUpgrade(string id, UpgradeRarity rarity)
+    {
         switch (id)
         {
             case "damage":
@@ -595,13 +733,6 @@ public class LevelUpManager : MonoBehaviour
 
     UpgradeRarity RollRarityForUpgrade(string id)
     {
-        switch (id)
-        {
-            case "projectilecount":
-            case "regen":
-                return UpgradeRarity.Legendary;
-        }
-
         return RollRarity();
     }
 
@@ -834,6 +965,84 @@ public class LevelUpManager : MonoBehaviour
         }
 
         return 0.03f;
+    }
+
+    float GetWeaponDamageValue(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.10f;
+            case UpgradeRarity.Rare: return 0.18f;
+            case UpgradeRarity.Epic: return 0.30f;
+            case UpgradeRarity.Legendary: return 0.45f;
+        }
+
+        return 0.10f;
+    }
+
+    float GetWeaponRangeValue(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.15f;
+            case UpgradeRarity.Rare: return 0.25f;
+            case UpgradeRarity.Epic: return 0.40f;
+            case UpgradeRarity.Legendary: return 0.65f;
+        }
+
+        return 0.15f;
+    }
+
+    float GetWeaponCooldownReductionValue(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.10f;
+            case UpgradeRarity.Rare: return 0.16f;
+            case UpgradeRarity.Epic: return 0.25f;
+            case UpgradeRarity.Legendary: return 0.40f;
+        }
+
+        return 0.10f;
+    }
+
+    float GetWeaponRangedCooldownReductionValue(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.05f;
+            case UpgradeRarity.Rare: return 0.08f;
+            case UpgradeRarity.Epic: return 0.13f;
+            case UpgradeRarity.Legendary: return 0.20f;
+        }
+
+        return 0.05f;
+    }
+
+    float GetWeaponRangedRangeValue(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.7f;
+            case UpgradeRarity.Rare: return 1.2f;
+            case UpgradeRarity.Epic: return 2f;
+            case UpgradeRarity.Legendary: return 3f;
+        }
+
+        return 0.7f;
+    }
+
+    float GetWeaponProjectileSpeedValue(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.15f;
+            case UpgradeRarity.Rare: return 0.25f;
+            case UpgradeRarity.Epic: return 0.40f;
+            case UpgradeRarity.Legendary: return 0.65f;
+        }
+
+        return 0.15f;
     }
 }
 

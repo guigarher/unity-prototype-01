@@ -169,21 +169,63 @@ public class BasicMeleeWeapon : WeaponBase
         switch (option.id)
         {
             case "melee_weapon_damage":
-                weaponDamageMultiplier += 0.10f;
+                weaponDamageMultiplier += GetWeaponDamageBonus(option.rarity);
                 break;
 
             case "melee_weapon_range":
-                bonusRange += 0.2f;
+                bonusRange += GetWeaponRangeBonus(option.rarity);
                 break;
 
             case "melee_weapon_speed":
-                baseAttackCooldown = Mathf.Max(0.4f, baseAttackCooldown - 0.15f);
+                baseAttackCooldown = Mathf.Max(
+                    0.4f,
+                    baseAttackCooldown - GetWeaponCooldownReduction(option.rarity)
+                );
                 break;
         }
 
         LevelUp();
 
         Debug.Log("Mejora aplicada a " + weaponName + ": " + option.title);
+    }
+
+    float GetWeaponDamageBonus(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.10f;
+            case UpgradeRarity.Rare: return 0.18f;
+            case UpgradeRarity.Epic: return 0.30f;
+            case UpgradeRarity.Legendary: return 0.45f;
+        }
+
+        return 0.10f;
+    }
+
+    float GetWeaponRangeBonus(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.15f;
+            case UpgradeRarity.Rare: return 0.25f;
+            case UpgradeRarity.Epic: return 0.40f;
+            case UpgradeRarity.Legendary: return 0.65f;
+        }
+
+        return 0.15f;
+    }
+
+    float GetWeaponCooldownReduction(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.10f;
+            case UpgradeRarity.Rare: return 0.16f;
+            case UpgradeRarity.Epic: return 0.25f;
+            case UpgradeRarity.Legendary: return 0.40f;
+        }
+
+        return 0.10f;
     }
 
     void OnDrawGizmosSelected()

@@ -156,7 +156,7 @@ public class BasicRangedWeapon : WeaponBase
             new UpgradeOption(
                 "ranged_weapon_damage",
                 "[Arma] Semillas reforzadas",
-                "Esta arma a distancia gana +10% de daño.",
+                "Esta arma a distancia gana daño.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -165,7 +165,7 @@ public class BasicRangedWeapon : WeaponBase
             new UpgradeOption(
                 "ranged_weapon_speed",
                 "[Arma] Gatillo rápido",
-                "Esta arma a distancia reduce su cooldown en 0.08 segundos.",
+                "Esta arma a distancia reduce su cooldown.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -174,7 +174,7 @@ public class BasicRangedWeapon : WeaponBase
             new UpgradeOption(
                 "ranged_weapon_range",
                 "[Arma] Cañón largo",
-                "Esta arma a distancia gana +1 de alcance.",
+                "Esta arma a distancia gana alcance.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -183,37 +183,91 @@ public class BasicRangedWeapon : WeaponBase
             new UpgradeOption(
                 "ranged_weapon_projectile_speed",
                 "[Arma] Disparo veloz",
-                "Los proyectiles de esta arma vuelan un 15% más rápido.",
+                "Los proyectiles de esta arma vuelan más rápido.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
             )
         };
     }
-
     public override void ApplySpecificUpgrade(UpgradeOption option)
     {
         switch (option.id)
         {
             case "ranged_weapon_damage":
-                weaponDamageMultiplier += 0.10f;
+                weaponDamageMultiplier += GetWeaponDamageBonus(option.rarity);
                 break;
 
             case "ranged_weapon_speed":
-                baseAttackCooldown = Mathf.Max(0.25f, baseAttackCooldown - 0.08f);
+                baseAttackCooldown = Mathf.Max(
+                    0.25f,
+                    baseAttackCooldown - GetWeaponCooldownReduction(option.rarity)
+                );
                 break;
 
             case "ranged_weapon_range":
-                attackRange += 1f;
+                attackRange += GetWeaponRangeBonus(option.rarity);
                 break;
 
             case "ranged_weapon_projectile_speed":
-                weaponProjectileSpeedMultiplier += 0.15f;
+                weaponProjectileSpeedMultiplier += GetWeaponProjectileSpeedBonus(option.rarity);
                 break;
         }
 
         LevelUp();
 
         Debug.Log("Mejora aplicada a " + weaponName + ": " + option.title);
+    }
+
+    float GetWeaponDamageBonus(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.10f;
+            case UpgradeRarity.Rare: return 0.18f;
+            case UpgradeRarity.Epic: return 0.30f;
+            case UpgradeRarity.Legendary: return 0.45f;
+        }
+
+        return 0.10f;
+    }
+
+    float GetWeaponCooldownReduction(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.05f;
+            case UpgradeRarity.Rare: return 0.08f;
+            case UpgradeRarity.Epic: return 0.13f;
+            case UpgradeRarity.Legendary: return 0.20f;
+        }
+
+        return 0.05f;
+    }
+
+    float GetWeaponRangeBonus(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.7f;
+            case UpgradeRarity.Rare: return 1.2f;
+            case UpgradeRarity.Epic: return 2f;
+            case UpgradeRarity.Legendary: return 3f;
+        }
+
+        return 0.7f;
+    }
+
+    float GetWeaponProjectileSpeedBonus(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.15f;
+            case UpgradeRarity.Rare: return 0.25f;
+            case UpgradeRarity.Epic: return 0.40f;
+            case UpgradeRarity.Legendary: return 0.65f;
+        }
+
+        return 0.15f;
     }
 }

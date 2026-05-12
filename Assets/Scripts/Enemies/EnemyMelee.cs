@@ -7,6 +7,10 @@ public class EnemyMelee : MonoBehaviour
 
     [Header("Target")]
     public Transform target;
+    private Transform playerTarget;
+
+    [Header("Comportamiento de noche")]
+    public bool targetsBaseAtNight = false;
 
     [Header("Movement")]
     public float moveSpeed = 3f;
@@ -21,7 +25,10 @@ public class EnemyMelee : MonoBehaviour
     public float attackHitRange = 1.6f;
     public float attackWindUp = 0.5f;
     public float attackCooldown = 1f;
+
+    [Header("Daño")]
     public int damage = 8;
+    public int baseDamage = 1;
 
     private Rigidbody2D rb;
     private bool isAttacking = false;
@@ -35,15 +42,14 @@ public class EnemyMelee : MonoBehaviour
 
     void Start()
     {
-        if (target == null)
-        {
-            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
 
-            if (playerObject != null)
-            {
-                target = playerObject.transform;
-            }
+        if (playerObject != null)
+        {
+            playerTarget = playerObject.transform;
         }
+
+        UpdateTargetByPhase();
     }
 
     void FixedUpdate()
@@ -60,7 +66,7 @@ public class EnemyMelee : MonoBehaviour
             cooldownTimer -= Time.fixedDeltaTime;
         }
 
-        float distanceToPlayer = Vector2.Distance(transform.position, target.position);
+        float distanceToTarget = GetEffectiveDistanceToTarget();
 
         if (isAttacking)
         {
@@ -68,9 +74,9 @@ public class EnemyMelee : MonoBehaviour
             return;
         }
 
-        if (distanceToPlayer > attackStartRange)
+        if (distanceToTarget > attackStartRange)
         {
-            ChasePlayerWithSeparation();
+            ChaseTargetWithSeparation();
         }
         else
         {
@@ -83,25 +89,25 @@ public class EnemyMelee : MonoBehaviour
         }
     }
 
-    void ChasePlayerWithSeparation()
+    void ChaseTargetWithSeparation()
     {
-        Vector2 directionToPlayer = ((Vector2)target.position - rb.position).normalized;
+        Vector2 directionToTarget = ((Vector2)target.position - rb.position).normalized;
         Vector2 separation = CalculateSeparation();
 
-        Vector2 finalDirection = directionToPlayer + separation * separationStrength;
+        Vector2 finalDirection = directionToTarget + separation * separationStrength;
 
         if (finalDirection.sqrMagnitude > 1f)
         {
             finalDirection.Normalize();
         }
 
-        float distanceToPlayer = Vector2.Distance(transform.position, target.position);
+        float distanceToTarget = GetEffectiveDistanceToTarget();
 
         float slowStartDistance = 6f;
         float slowFullDistance = 16f;
         float minSpeedMultiplier = 0.45f;
 
-        float t = Mathf.InverseLerp(slowStartDistance, slowFullDistance, distanceToPlayer);
+        float t = Mathf.InverseLerp(slowStartDistance, slowFullDistance, distanceToTarget);
         float speedMultiplier = Mathf.Lerp(1f, minSpeedMultiplier, t);
 
         float currentMoveSpeed = moveSpeed * speedMultiplier;
@@ -135,6 +141,52 @@ public class EnemyMelee : MonoBehaviour
         return separation;
     }
 
+    void OnEnable()
+    {
+        GamePhaseManager.OnPhaseChanged += OnPhaseChanged;
+    }
+
+    void OnDisable()
+    {
+        GamePhaseManager.OnPhaseChanged -= OnPhaseChanged;
+    }
+
+    void OnPhaseChanged(GamePhase phase)
+    {
+        UpdateTargetByPhase();
+    }
+
+    void UpdateTargetByPhase()
+    {
+        if (targetsBaseAtNight &&
+            GamePhaseManager.Instance != null &&
+            GamePhaseManager.Instance.IsNight() &&
+            BaseCore.Instance != null)
+        {
+            target = BaseCore.Instance.transform;
+        }
+        else
+        {
+            target = playerTarget;
+        }
+    }
+
+    float GetEffectiveDistanceToTarget()
+    {
+        if (target == null) return Mathf.Infinity;
+
+        float distance = Vector2.Distance(transform.position, target.position);
+
+        BaseCore baseCore = target.GetComponentInParent<BaseCore>();
+
+        if (baseCore != null)
+        {
+            distance -= baseCore.enemyAttackRadius;
+        }
+
+        return Mathf.Max(0f, distance);
+    }
+
     IEnumerator AttackRoutine()
     {
         isAttacking = true;
@@ -144,21 +196,34 @@ public class EnemyMelee : MonoBehaviour
 
         if (target != null)
         {
-            float distanceToPlayer = Vector2.Distance(transform.position, target.position);
+            float distanceToTarget = GetEffectiveDistanceToTarget();
 
-            if (distanceToPlayer <= attackHitRange)
+            if (distanceToTarget <= attackHitRange)
             {
-                PlayerHealth playerHealth = target.GetComponent<PlayerHealth>();
-
-                if (playerHealth != null)
-                {
-                    playerHealth.TakeDamage(damage);
-                }
+                DamageTarget();
             }
         }
 
         cooldownTimer = attackCooldown;
         isAttacking = false;
+    }
+
+    void DamageTarget()
+    {
+        PlayerHealth playerHealth = target.GetComponentInParent<PlayerHealth>();
+
+        if (playerHealth != null)
+        {
+            playerHealth.TakeDamage(damage);
+            return;
+        }
+
+        BaseCore baseCore = target.GetComponentInParent<BaseCore>();
+
+        if (baseCore != null)
+        {
+            baseCore.TakeDamage(baseDamage);
+        }
     }
 
     void OnDrawGizmosSelected()

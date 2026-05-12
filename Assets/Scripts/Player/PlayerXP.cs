@@ -21,11 +21,11 @@ public class PlayerXP : MonoBehaviour
         }
     }
 
-    public void AddXP(float amount)
+    public void AddXP(float amount, bool applyMultiplier = true)
     {
         float multiplier = 1f;
 
-        if (stats != null)
+        if (applyMultiplier && stats != null)
         {
             multiplier = stats.xpMultiplier;
         }
@@ -36,6 +36,11 @@ public class PlayerXP : MonoBehaviour
         Debug.Log("XP ganada: " + finalXP);
 
         ProcessLevelUps();
+    }
+
+    public float GetFullLevelXPReward()
+    {
+        return xpToNextLevel;
     }
 
     public void AddExactXPForOneLevel()
@@ -62,7 +67,7 @@ public class PlayerXP : MonoBehaviour
     {
         currentLevel++;
 
-        xpToNextLevel = Mathf.RoundToInt(xpToNextLevel * 1.35f);
+        xpToNextLevel = Mathf.RoundToInt(xpToNextLevel * 1.18f);
 
         Debug.Log("¡Subiste a nivel " + currentLevel + "!");
 

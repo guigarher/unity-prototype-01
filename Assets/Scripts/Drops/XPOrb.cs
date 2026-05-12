@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class XPOrb : MonoBehaviour
 {
+    public bool applyXPMultiplier = true;
     public int xpValue = 1;
     public float moveSpeed = 6f;
 
@@ -66,7 +67,7 @@ public class XPOrb : MonoBehaviour
 
         if (playerXP != null)
         {
-            playerXP.AddXP(xpValue);
+            playerXP.AddXP(xpValue, applyXPMultiplier);
         }
 
         Destroy(gameObject);

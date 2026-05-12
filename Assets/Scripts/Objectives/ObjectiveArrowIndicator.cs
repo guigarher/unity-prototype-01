@@ -4,17 +4,25 @@ public class ObjectiveArrowIndicator : MonoBehaviour
 {
     [Header("Referencias")]
     public Transform player;
-    public Transform arrowTransform;
+
+    [Header("Flecha para cofres")]
+    public Transform chestArrowTransform;
+
+    [Header("Flecha para recursos")]
+    public Transform resourceArrowTransform;
 
     [Header("Configuración")]
-    public float arrowDistanceFromPlayer = 1.6f;
+    public float chestArrowDistanceFromPlayer = 1.6f;
+    public float resourceArrowDistanceFromPlayer = 2.1f;
     public float hideDistance = 1.2f;
     public float scanInterval = 0.25f;
 
     [Header("Rotación")]
     public float rotationOffset = -90f;
 
-    private ObjectiveTarget currentTarget;
+    private ObjectiveTarget currentChestTarget;
+    private ObjectiveTarget currentResourceTarget;
+
     private float scanTimer = 0f;
 
     void Start()
@@ -29,68 +37,79 @@ public class ObjectiveArrowIndicator : MonoBehaviour
             }
         }
 
-        if (arrowTransform != null)
-        {
-            arrowTransform.gameObject.SetActive(false);
-        }
+        HideArrow(chestArrowTransform);
+        HideArrow(resourceArrowTransform);
     }
 
     void Update()
     {
-        if (player == null || arrowTransform == null) return;
+        if (player == null) return;
 
         scanTimer -= Time.deltaTime;
 
         if (scanTimer <= 0f)
         {
-            FindBestTarget();
+            currentChestTarget = FindNearestTargetOfType(ObjectiveType.Chest);
+            currentResourceTarget = FindNearestTargetOfType(ObjectiveType.FarmZone);
+
             scanTimer = scanInterval;
         }
 
-        UpdateArrow();
+        UpdateArrow(
+            chestArrowTransform,
+            currentChestTarget,
+            chestArrowDistanceFromPlayer
+        );
+
+        UpdateArrow(
+            resourceArrowTransform,
+            currentResourceTarget,
+            resourceArrowDistanceFromPlayer
+        );
     }
 
-    void FindBestTarget()
+    ObjectiveTarget FindNearestTargetOfType(ObjectiveType objectiveType)
     {
-        ObjectiveTarget[] targets = Object.FindObjectsByType<ObjectiveTarget>(FindObjectsInactive.Exclude);
+        ObjectiveTarget[] targets = Object.FindObjectsByType<ObjectiveTarget>(
+            FindObjectsInactive.Exclude
+        );
 
-        ObjectiveTarget bestTarget = null;
-        float bestScore = Mathf.Infinity;
+        ObjectiveTarget nearestTarget = null;
+        float nearestDistance = Mathf.Infinity;
 
         foreach (ObjectiveTarget target in targets)
         {
             if (target == null) continue;
+            if (target.objectiveType != objectiveType) continue;
 
             float distance = Vector2.Distance(player.position, target.transform.position);
 
-            // Menor score = mejor objetivo.
-            // La prioridad resta, así que objetivos importantes ganan.
-            float score = distance - target.priority * 5f;
-
-            if (score < bestScore)
+            if (distance < nearestDistance)
             {
-                bestScore = score;
-                bestTarget = target;
+                nearestDistance = distance;
+                nearestTarget = target;
             }
         }
 
-        currentTarget = bestTarget;
+        return nearestTarget;
     }
 
-    void UpdateArrow()
+    void UpdateArrow(Transform arrowTransform, ObjectiveTarget target, float distanceFromPlayer)
     {
-        if (currentTarget == null)
+        if (arrowTransform == null) return;
+
+        if (target == null)
         {
-            arrowTransform.gameObject.SetActive(false);
+            HideArrow(arrowTransform);
             return;
         }
 
-        Vector2 direction = currentTarget.transform.position - player.position;
+        Vector2 direction = target.transform.position - player.position;
         float distance = direction.magnitude;
 
         if (distance <= hideDistance)
         {
-            arrowTransform.gameObject.SetActive(false);
+            HideArrow(arrowTransform);
             return;
         }
 
@@ -98,9 +117,21 @@ public class ObjectiveArrowIndicator : MonoBehaviour
 
         arrowTransform.gameObject.SetActive(true);
 
-        arrowTransform.position = player.position + (Vector3)(direction * arrowDistanceFromPlayer);
+        arrowTransform.position = player.position + (Vector3)(direction * distanceFromPlayer);
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        arrowTransform.rotation = Quaternion.Euler(0f, 0f, angle + rotationOffset);
+
+        arrowTransform.rotation = Quaternion.Euler(
+            0f,
+            0f,
+            angle + rotationOffset
+        );
+    }
+
+    void HideArrow(Transform arrowTransform)
+    {
+        if (arrowTransform == null) return;
+
+        arrowTransform.gameObject.SetActive(false);
     }
 }

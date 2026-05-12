@@ -10,8 +10,14 @@ public class PlayerHealth : MonoBehaviour
     private bool isDead = false;
 
     private PlayerStats stats;
+    private DamageFlash damageFlash;
 
     private float regenAccumulator = 0f;
+
+    void Awake()
+    {
+        damageFlash = GetComponent<DamageFlash>();
+    }
 
     void Start()
     {
@@ -74,6 +80,11 @@ public class PlayerHealth : MonoBehaviour
         if (currentHealth < 0)
         {
             currentHealth = 0;
+        }
+
+        if (damageFlash != null)
+        {
+            damageFlash.PlayFlash();
         }
 
         Debug.Log("El jugador recibió daño. Vida actual: " + currentHealth);

@@ -7,6 +7,10 @@ public class EnemyRanged : MonoBehaviour
 
     [Header("Target")]
     public Transform target;
+    private Transform playerTarget;
+
+    [Header("Comportamiento de noche")]
+    public bool targetsBaseAtNight = true;
 
     [Header("Movement")]
     public float moveSpeed = 2.4f;
@@ -24,10 +28,13 @@ public class EnemyRanged : MonoBehaviour
     [Header("Ataque ranged")]
     public GameObject projectilePrefab;
     public float projectileSpeed = 6f;
-    public int damage = 6;
     public float attackWindUp = 0.45f;
     public float attackCooldown = 2.2f;
     public float projectileSpawnDistance = 0.6f;
+
+    [Header("Daño")]
+    public int damage = 6;
+    public int baseDamage = 1;
 
     private Rigidbody2D rb;
     private bool isAttacking = false;
@@ -41,15 +48,14 @@ public class EnemyRanged : MonoBehaviour
 
     void Start()
     {
-        if (target == null)
-        {
-            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
 
-            if (playerObject != null)
-            {
-                target = playerObject.transform;
-            }
+        if (playerObject != null)
+        {
+            playerTarget = playerObject.transform;
         }
+
+        UpdateTargetByPhase();
     }
 
     void FixedUpdate()
@@ -66,7 +72,7 @@ public class EnemyRanged : MonoBehaviour
             cooldownTimer -= Time.fixedDeltaTime;
         }
 
-        float distanceToPlayer = Vector2.Distance(transform.position, target.position);
+        float distanceToTarget = GetEffectiveDistanceToTarget();
 
         if (isAttacking)
         {
@@ -74,34 +80,39 @@ public class EnemyRanged : MonoBehaviour
             return;
         }
 
-        if (distanceToPlayer <= attackRange && cooldownTimer <= 0f)
+        // Si está demasiado cerca, primero se aleja.
+        if (distanceToTarget < tooCloseDistance)
+        {
+            MoveAroundTarget(distanceToTarget);
+            return;
+        }
+
+        // Si está a rango, dispara.
+        if (distanceToTarget <= attackRange && cooldownTimer <= 0f)
         {
             StartCoroutine(AttackRoutine());
             return;
         }
 
-        MoveAroundPlayer(distanceToPlayer);
+        MoveAroundTarget(distanceToTarget);
     }
 
-    void MoveAroundPlayer(float distanceToPlayer)
+    void MoveAroundTarget(float distanceToTarget)
     {
-        Vector2 directionToPlayer = ((Vector2)target.position - rb.position).normalized;
+        Vector2 directionToTarget = ((Vector2)target.position - rb.position).normalized;
         Vector2 movementDirection;
 
-        if (distanceToPlayer > preferredDistance)
+        if (distanceToTarget > preferredDistance)
         {
-            // Si está lejos, se acerca.
-            movementDirection = directionToPlayer;
+            movementDirection = directionToTarget;
         }
-        else if (distanceToPlayer < tooCloseDistance)
+        else if (distanceToTarget < tooCloseDistance)
         {
-            // Si el jugador se acerca demasiado, se aleja.
-            movementDirection = -directionToPlayer;
+            movementDirection = -directionToTarget;
         }
         else
         {
-            // Si está en buena distancia, se mueve lateralmente un poco.
-            movementDirection = new Vector2(-directionToPlayer.y, directionToPlayer.x);
+            movementDirection = new Vector2(-directionToTarget.y, directionToTarget.x);
         }
 
         Vector2 separation = CalculateSeparation();
@@ -141,6 +152,52 @@ public class EnemyRanged : MonoBehaviour
         return separation;
     }
 
+    void OnEnable()
+    {
+        GamePhaseManager.OnPhaseChanged += OnPhaseChanged;
+    }
+
+    void OnDisable()
+    {
+        GamePhaseManager.OnPhaseChanged -= OnPhaseChanged;
+    }
+
+    void OnPhaseChanged(GamePhase phase)
+    {
+        UpdateTargetByPhase();
+    }
+
+    void UpdateTargetByPhase()
+    {
+        if (targetsBaseAtNight &&
+            GamePhaseManager.Instance != null &&
+            GamePhaseManager.Instance.IsNight() &&
+            BaseCore.Instance != null)
+        {
+            target = BaseCore.Instance.transform;
+        }
+        else
+        {
+            target = playerTarget;
+        }
+    }
+
+    float GetEffectiveDistanceToTarget()
+    {
+        if (target == null) return Mathf.Infinity;
+
+        float distance = Vector2.Distance(transform.position, target.position);
+
+        BaseCore baseCore = target.GetComponentInParent<BaseCore>();
+
+        if (baseCore != null)
+        {
+            distance -= baseCore.enemyAttackRadius;
+        }
+
+        return Mathf.Max(0f, distance);
+    }
+
     IEnumerator AttackRoutine()
     {
         isAttacking = true;
@@ -172,7 +229,14 @@ public class EnemyRanged : MonoBehaviour
 
         if (projectile != null)
         {
-            projectile.Initialize(direction, projectileSpeed, damage);
+            int projectileDamage = damage;
+
+            if (target.GetComponentInParent<BaseCore>() != null)
+            {
+                projectileDamage = baseDamage;
+            }
+
+            projectile.Initialize(direction, projectileSpeed, projectileDamage);
         }
     }
 
