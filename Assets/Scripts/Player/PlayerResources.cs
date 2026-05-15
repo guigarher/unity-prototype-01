@@ -46,6 +46,25 @@ public class PlayerResources : MonoBehaviour
         return true;
     }
 
+    public bool CanSpendResources(int woodCost, int stoneCost)
+    {
+        return wood >= woodCost && stone >= stoneCost;
+    }
+
+    public bool SpendResources(int woodCost, int stoneCost)
+    {
+        if (!CanSpendResources(woodCost, stoneCost))
+        {
+            return false;
+        }
+
+        wood -= woodCost;
+        stone -= stoneCost;
+
+        NotifyResourcesChanged();
+        return true;
+    }
+
     void NotifyResourcesChanged()
     {
         OnResourcesChanged?.Invoke(wood, stone);

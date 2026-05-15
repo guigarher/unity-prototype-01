@@ -14,6 +14,9 @@ public class ObjectiveTarget : MonoBehaviour
     [Header("Tipo de objetivo")]
     public ObjectiveType objectiveType = ObjectiveType.Chest;
 
+    [Header("Solo si es recurso")]
+    public ResourceType resourceType = ResourceType.Wood;
+
     [Header("Texto")]
     public string displayName = "Objetivo";
 

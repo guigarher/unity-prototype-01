@@ -7,7 +7,11 @@ public class LevelUpManager : MonoBehaviour
     public static LevelUpManager Instance;
 
     private const int OPTION_COUNT = 4;
-    private const int REROLL_COST = 5;
+
+    [Header("Reroll con oro")]
+    public int baseRerollCost = 5;
+    public int rerollCostIncrease = 3;
+    private int currentRerollCost;
 
     [Header("Control de opciones")]
     public bool guaranteeWeaponUpgradeOption = true;
@@ -41,6 +45,7 @@ public class LevelUpManager : MonoBehaviour
     void Start()
     {
         InitializeReferences();
+        currentRerollCost = baseRerollCost;
     }
 
     void InitializeReferences()
@@ -117,6 +122,8 @@ public class LevelUpManager : MonoBehaviour
         choosingWeapon = false;
         waitingForChoice = true;
         Time.timeScale = 0f;
+
+        currentRerollCost = baseRerollCost;
 
         GenerateUpgradeOptions();
         ShowUpgradeOptionsInConsole();
@@ -316,7 +323,7 @@ public class LevelUpManager : MonoBehaviour
             Debug.Log((i + 1) + ": " + currentOptions[i].title + " - " + currentOptions[i].description);
         }
 
-        Debug.Log("Pulsa 1, 2, 3 o 4 para elegir. Pulsa R para reroll. Coste: " + REROLL_COST);
+        Debug.Log("Pulsa 1, 2, 3 o 4 para elegir. Pulsa R para reroll. Coste actual: " + currentRerollCost + " oro");
     }
 
     void ShowWeaponOptionsInConsole()
@@ -370,13 +377,25 @@ public class LevelUpManager : MonoBehaviour
 
     void RerollUpgrades()
     {
-        if (currency == null) return;
-
-        if (currency.SpendCoins(REROLL_COST))
+        if (currency == null)
         {
-            GenerateUpgradeOptions();
-            ShowUpgradeOptionsInConsole();
+            Debug.Log("No se encontró PlayerCurrency para hacer reroll.");
+            return;
         }
+
+        if (!currency.SpendCoins(currentRerollCost))
+        {
+            Debug.Log("No tienes oro suficiente para reroll. Coste actual: " + currentRerollCost);
+            return;
+        }
+
+        GenerateUpgradeOptions();
+
+        currentRerollCost += rerollCostIncrease;
+
+        Debug.Log("Reroll realizado. Nuevo coste: " + currentRerollCost + " oro");
+
+        ShowUpgradeOptionsInConsole();
     }
 
     void ApplyUpgrade(UpgradeOption option)

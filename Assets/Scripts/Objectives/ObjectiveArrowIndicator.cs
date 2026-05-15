@@ -8,12 +8,16 @@ public class ObjectiveArrowIndicator : MonoBehaviour
     [Header("Flecha para cofres")]
     public Transform chestArrowTransform;
 
-    [Header("Flecha para recursos")]
-    public Transform resourceArrowTransform;
+    [Header("Flecha para madera")]
+    public Transform woodArrowTransform;
+
+    [Header("Flecha para piedra")]
+    public Transform stoneArrowTransform;
 
     [Header("Configuración")]
     public float chestArrowDistanceFromPlayer = 1.6f;
-    public float resourceArrowDistanceFromPlayer = 2.1f;
+    public float woodArrowDistanceFromPlayer = 2.1f;
+    public float stoneArrowDistanceFromPlayer = 2.45f;
     public float hideDistance = 1.2f;
     public float scanInterval = 0.25f;
 
@@ -21,7 +25,8 @@ public class ObjectiveArrowIndicator : MonoBehaviour
     public float rotationOffset = -90f;
 
     private ObjectiveTarget currentChestTarget;
-    private ObjectiveTarget currentResourceTarget;
+    private ObjectiveTarget currentWoodTarget;
+    private ObjectiveTarget currentStoneTarget;
 
     private float scanTimer = 0f;
 
@@ -38,7 +43,8 @@ public class ObjectiveArrowIndicator : MonoBehaviour
         }
 
         HideArrow(chestArrowTransform);
-        HideArrow(resourceArrowTransform);
+        HideArrow(woodArrowTransform);
+        HideArrow(stoneArrowTransform);
     }
 
     void Update()
@@ -50,7 +56,8 @@ public class ObjectiveArrowIndicator : MonoBehaviour
         if (scanTimer <= 0f)
         {
             currentChestTarget = FindNearestTargetOfType(ObjectiveType.Chest);
-            currentResourceTarget = FindNearestTargetOfType(ObjectiveType.FarmZone);
+            currentWoodTarget = FindNearestResourceTarget(ResourceType.Wood);
+            currentStoneTarget = FindNearestResourceTarget(ResourceType.Stone);
 
             scanTimer = scanInterval;
         }
@@ -62,9 +69,15 @@ public class ObjectiveArrowIndicator : MonoBehaviour
         );
 
         UpdateArrow(
-            resourceArrowTransform,
-            currentResourceTarget,
-            resourceArrowDistanceFromPlayer
+            woodArrowTransform,
+            currentWoodTarget,
+            woodArrowDistanceFromPlayer
+        );
+
+        UpdateArrow(
+            stoneArrowTransform,
+            currentStoneTarget,
+            stoneArrowDistanceFromPlayer
         );
     }
 
@@ -81,6 +94,33 @@ public class ObjectiveArrowIndicator : MonoBehaviour
         {
             if (target == null) continue;
             if (target.objectiveType != objectiveType) continue;
+
+            float distance = Vector2.Distance(player.position, target.transform.position);
+
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                nearestTarget = target;
+            }
+        }
+
+        return nearestTarget;
+    }
+
+    ObjectiveTarget FindNearestResourceTarget(ResourceType resourceType)
+    {
+        ObjectiveTarget[] targets = Object.FindObjectsByType<ObjectiveTarget>(
+            FindObjectsInactive.Exclude
+        );
+
+        ObjectiveTarget nearestTarget = null;
+        float nearestDistance = Mathf.Infinity;
+
+        foreach (ObjectiveTarget target in targets)
+        {
+            if (target == null) continue;
+            if (target.objectiveType != ObjectiveType.Resource) continue;
+            if (target.resourceType != resourceType) continue;
 
             float distance = Vector2.Distance(player.position, target.transform.position);
 

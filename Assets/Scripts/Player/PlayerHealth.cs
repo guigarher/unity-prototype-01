@@ -12,6 +12,14 @@ public class PlayerHealth : MonoBehaviour
     private PlayerStats stats;
     private DamageFlash damageFlash;
 
+    [Header("Popup de esquiva")]
+    public GameObject dodgePopupPrefab;
+    public Vector3 dodgePopupOffset = new Vector3(0f, 1.2f, 0f);
+
+    [Header("Popup de daño recibido")]
+    public GameObject damageTakenPopupPrefab;
+    public Vector3 damageTakenPopupOffset = new Vector3(0f, 0.85f, 0f);
+
     private float regenAccumulator = 0f;
 
     void Awake()
@@ -67,7 +75,10 @@ public class PlayerHealth : MonoBehaviour
         {
             if (Random.value < stats.dodgeChance)
             {
+                ShowDodgePopup();
+
                 Debug.Log("¡Esquiva!");
+
                 StartCoroutine(DamageCooldown());
                 return;
             }
@@ -81,6 +92,7 @@ public class PlayerHealth : MonoBehaviour
         {
             currentHealth = 0;
         }
+        ShowDamageTakenPopup(damage);
 
         if (damageFlash != null)
         {
@@ -96,6 +108,62 @@ public class PlayerHealth : MonoBehaviour
         }
 
         StartCoroutine(DamageCooldown());
+    }
+
+    void ShowDodgePopup()
+    {
+        if (dodgePopupPrefab == null) return;
+
+        Vector3 randomOffset = new Vector3(
+            Random.Range(-0.25f, 0.25f),
+            Random.Range(0f, 0.25f),
+            0f
+        );
+
+        GameObject popupObject = Instantiate(
+            dodgePopupPrefab,
+            transform.position + dodgePopupOffset + randomOffset,
+            Quaternion.identity
+        );
+
+        DamagePopup popup = popupObject.GetComponent<DamagePopup>();
+
+        if (popup != null)
+        {
+            popup.SetupText(
+                "¡ESQUIVADO!",
+                new Color(0.5f, 0.9f, 1f, 1f),
+                2.6f
+            );
+        }
+    }
+
+    void ShowDamageTakenPopup(int damage)
+    {
+        if (damageTakenPopupPrefab == null) return;
+
+        Vector3 randomOffset = new Vector3(
+            Random.Range(-0.15f, 0.15f),
+            Random.Range(0f, 0.15f),
+            0f
+        );
+
+        GameObject popupObject = Instantiate(
+            damageTakenPopupPrefab,
+            transform.position + damageTakenPopupOffset + randomOffset,
+            Quaternion.identity
+        );
+
+        DamagePopup popup = popupObject.GetComponent<DamagePopup>();
+
+        if (popup != null)
+        {
+            popup.SetupText(
+                "-" + damage,
+                new Color(1f, 0.35f, 0.35f, 1f),
+                2.8f
+            );
+        }
     }
 
     void Die()

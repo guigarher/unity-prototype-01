@@ -4,7 +4,8 @@ using System;
 public class BaseCore : MonoBehaviour
 {
     public static BaseCore Instance;
-
+    [Header("Escudo temporal")]
+    public int currentShield = 0;
     private DamageFlash damageFlash;
 
     [Header("Reglas de daño")]
@@ -40,7 +41,6 @@ public class BaseCore : MonoBehaviour
     {
         if (isDestroyed) return;
 
-        // Si está activado, la base solo puede recibir daño durante la noche.
         if (onlyTakeDamageAtNight &&
             GamePhaseManager.Instance != null &&
             !GamePhaseManager.Instance.IsNight())
@@ -48,7 +48,27 @@ public class BaseCore : MonoBehaviour
             return;
         }
 
-        currentHealth -= damage;
+        int remainingDamage = damage;
+
+        if (currentShield > 0)
+        {
+            int absorbed = Mathf.Min(currentShield, remainingDamage);
+            currentShield -= absorbed;
+            remainingDamage -= absorbed;
+
+            if (logDamage)
+            {
+                Debug.Log("Escudo de base absorbió " + absorbed + ". Escudo restante: " + currentShield);
+            }
+        }
+
+        if (remainingDamage <= 0)
+        {
+            NotifyHealthChanged();
+            return;
+        }
+
+        currentHealth -= remainingDamage;
         currentHealth = Mathf.Max(currentHealth, 0);
 
         if (damageFlash != null)
@@ -58,7 +78,7 @@ public class BaseCore : MonoBehaviour
 
         if (logDamage)
         {
-            Debug.Log("Base recibió " + damage + " daño. Vida: " + currentHealth + "/" + maxHealth);
+            Debug.Log("Base recibió " + remainingDamage + " daño. Vida: " + currentHealth + "/" + maxHealth);
         }
 
         NotifyHealthChanged();
@@ -77,6 +97,29 @@ public class BaseCore : MonoBehaviour
         currentHealth = Mathf.Min(currentHealth, maxHealth);
 
         Debug.Log("Base reparada +" + amount + ". Vida: " + currentHealth + "/" + maxHealth);
+
+        NotifyHealthChanged();
+    }
+
+    public void AddShield(int amount)
+    {
+        if (isDestroyed) return;
+
+        currentShield += amount;
+
+        Debug.Log("La base gana +" + amount + " de escudo. Escudo actual: " + currentShield);
+
+        NotifyHealthChanged();
+    }
+
+    public void RemoveShield(int amount)
+    {
+        if (amount <= 0) return;
+
+        currentShield -= amount;
+        currentShield = Mathf.Max(currentShield, 0);
+
+        Debug.Log("Escudo temporal eliminado. Escudo actual: " + currentShield);
 
         NotifyHealthChanged();
     }

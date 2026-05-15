@@ -18,8 +18,15 @@ public class ResourceZone : MonoBehaviour
     public int maxResourcePerPulse = 2;
 
     [Header("Límite de la zona")]
-    public bool hasLimitedPulses = true;
+    public bool hasLimitedPulses = false;
     public int maxPulses = 5;
+
+    [Header("Zona infinita durante el día")]
+    public bool infiniteZone = true;
+    public float secondsIncreasePerPulse = 0.35f;
+    public float maxSecondsPerPulse = 4.5f;
+    public int resourceBonusPerPulse = 1;
+    public int maxResourceBonus = 6;
 
     [Header("Si el jugador sale")]
     public bool loseProgressWhenOutside = true;
@@ -27,13 +34,6 @@ public class ResourceZone : MonoBehaviour
 
     [Header("Visual del pulso actual")]
     public Transform fillVisual;
-
-    [Header("Circunferencia de progreso total")]
-    public LineRenderer totalProgressRing;
-    public float totalRingRadius = 2.65f;
-    public float totalRingWidth = 0.12f;
-    public int totalRingSegments = 80;
-    public Color totalRingColor = new Color(1f, 0.75f, 0.1f, 1f);
 
     [Header("Texto opcional")]
     public TextMeshPro progressText;
@@ -45,6 +45,7 @@ public class ResourceZone : MonoBehaviour
     private bool playerInside = false;
     private float progress = 0f;
     private int completedPulses = 0;
+    private int currentResourceBonus = 0;
 
     private Vector3 initialFillScale;
     private PlayerResources playerResources;
@@ -55,9 +56,9 @@ public class ResourceZone : MonoBehaviour
         {
             initialFillScale = fillVisual.localScale;
             fillVisual.localScale = Vector3.zero;
+            fillVisual.gameObject.SetActive(false);
         }
 
-        SetupTotalProgressRing();
         UpdateVisual();
     }
 
@@ -69,6 +70,11 @@ public class ResourceZone : MonoBehaviour
 
     void UpdateProgress()
     {
+        if (GamePhaseManager.Instance != null && GamePhaseManager.Instance.IsNight())
+        {
+            return;
+        }
+
         if (playerInside)
         {
             progress += Time.deltaTime;
@@ -91,6 +97,7 @@ public class ResourceZone : MonoBehaviour
         completedPulses++;
 
         int amount = Random.Range(minResourcePerPulse, maxResourcePerPulse + 1);
+        amount += currentResourceBonus;
 
         if (playerResources != null)
         {
@@ -108,7 +115,27 @@ public class ResourceZone : MonoBehaviour
             }
         }
 
-        Debug.Log("Pulso completado en zona de " + resourceType + ". Pulsos: " + completedPulses + "/" + maxPulses);
+        Debug.Log(
+            "Pulso completado en zona de " + resourceType +
+            ". Pulso: " + completedPulses +
+            " | Recurso ganado: " + amount +
+            " | Siguiente pulso tarda: " + secondsPerPulse.ToString("0.00") + "s"
+        );
+
+        if (infiniteZone)
+        {
+            secondsPerPulse = Mathf.Min(
+                maxSecondsPerPulse,
+                secondsPerPulse + secondsIncreasePerPulse
+            );
+
+            currentResourceBonus = Mathf.Min(
+                maxResourceBonus,
+                currentResourceBonus + resourceBonusPerPulse
+            );
+
+            return;
+        }
 
         if (hasLimitedPulses && completedPulses >= maxPulses)
         {
@@ -122,74 +149,35 @@ public class ResourceZone : MonoBehaviour
 
         if (fillVisual != null)
         {
-            fillVisual.localScale = initialFillScale * pulsePercent;
+            if (pulsePercent < 0.03f)
+            {
+                fillVisual.gameObject.SetActive(false);
+                fillVisual.localScale = Vector3.zero;
+            }
+            else
+            {
+                fillVisual.gameObject.SetActive(true);
+                fillVisual.localScale = initialFillScale * pulsePercent;
+            }
         }
 
-        if (hasLimitedPulses && maxPulses > 0)
+        if (progressText != null)
         {
-            float totalPercent = (completedPulses + pulsePercent) / maxPulses;
-            totalPercent = Mathf.Clamp01(totalPercent);
+            if (infiniteZone)
+            {
+                int minNext = minResourcePerPulse + currentResourceBonus;
+                int maxNext = maxResourcePerPulse + currentResourceBonus;
 
-            DrawProgressRing(totalProgressRing, totalPercent);
-        }
-
-        if (progressText != null && hasLimitedPulses)
-        {
-            progressText.text = completedPulses + " / " + maxPulses;
-        }
-    }
-
-    void SetupTotalProgressRing()
-    {
-        if (totalProgressRing == null) return;
-
-        totalProgressRing.useWorldSpace = false;
-        totalProgressRing.loop = false;
-        totalProgressRing.startWidth = totalRingWidth;
-        totalProgressRing.endWidth = totalRingWidth;
-
-        totalProgressRing.sortingLayerName = "Default";
-        totalProgressRing.sortingOrder = 20;
-
-        totalProgressRing.startColor = totalRingColor;
-        totalProgressRing.endColor = totalRingColor;
-
-        Material material = new Material(Shader.Find("Sprites/Default"));
-        totalProgressRing.material = material;
-
-        DrawProgressRing(totalProgressRing, 0f);
-    }
-
-    void DrawProgressRing(LineRenderer lineRenderer, float percent)
-    {
-        if (lineRenderer == null) return;
-
-        percent = Mathf.Clamp01(percent);
-
-        // Evita que se vea el trocito inicial del anillo cuando aún casi no hay progreso.
-        if (percent < 0.03f)
-        {
-            lineRenderer.positionCount = 0;
-            return;
-        }
-
-        int visibleSegments = Mathf.Max(2, Mathf.CeilToInt(totalRingSegments * percent));
-        lineRenderer.positionCount = visibleSegments + 1;
-
-        float maxAngle = 360f * percent;
-
-        for (int i = 0; i <= visibleSegments; i++)
-        {
-            float t = i / (float)visibleSegments;
-            float angle = maxAngle * t;
-
-            // Empieza arriba y gira en sentido horario.
-            float radians = (angle + 90f) * Mathf.Deg2Rad;
-
-            float x = Mathf.Cos(radians) * totalRingRadius;
-            float y = Mathf.Sin(radians) * totalRingRadius;
-
-            lineRenderer.SetPosition(i, new Vector3(x, y, 0f));
+                progressText.text = minNext + "-" + maxNext;
+            }
+            else if (hasLimitedPulses)
+            {
+                progressText.text = completedPulses + " / " + maxPulses;
+            }
+            else
+            {
+                progressText.text = "";
+            }
         }
     }
 

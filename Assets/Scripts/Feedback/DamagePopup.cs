@@ -44,11 +44,34 @@ public class DamagePopup : MonoBehaviour
         timer = lifetime;
     }
 
+    public void SetupText(string text, Color color, float fontSize)
+    {
+        if (textMesh == null)
+        {
+            textMesh = GetComponent<TextMeshPro>();
+        }
+
+        if (textMesh == null) return;
+
+        textMesh.text = text;
+        textMesh.fontSize = fontSize;
+        textMesh.color = color;
+
+        timer = lifetime;
+    }
+
     void Update()
     {
         transform.position += Vector3.up * moveSpeed * Time.unscaledDeltaTime;
 
         timer -= Time.unscaledDeltaTime;
+
+        if (textMesh != null)
+        {
+            Color color = textMesh.color;
+            color.a = Mathf.Clamp01(timer / lifetime);
+            textMesh.color = color;
+        }
 
         if (timer <= 0f)
         {
