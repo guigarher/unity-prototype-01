@@ -47,7 +47,8 @@ public class PlayerStats : MonoBehaviour
     [Header("Melee")]
     public float meleeRange = 1.5f;
     public float meleeKnockbackMultiplier = 1f;
-
+    [Header("Área / rango cercano")]
+    public float areaRangeBonus = 0f;
     [Header("Ranged")]
     public float projectileSpeedMultiplier = 1f;
     public int projectileCountBonus = 0;

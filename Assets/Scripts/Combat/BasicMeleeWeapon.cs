@@ -27,6 +27,14 @@ public class BasicMeleeWeapon : WeaponBase
 
     private float attackTimer = 0f;
     private PlayerMovement movement;
+    private Rigidbody2D rb;
+    private Vector2 lastAttackDirection = Vector2.right;
+
+    [Header("Memoria de dirección")]
+    public float directionChangeGraceTime = 0.12f;
+
+    private Vector2 candidateAttackDirection = Vector2.right;
+    private float candidateDirectionTimer = 0f;
 
     private float bonusRange = 0f;
 
@@ -34,6 +42,7 @@ public class BasicMeleeWeapon : WeaponBase
     {
         base.Awake();
         movement = GetComponent<PlayerMovement>();
+        rb = GetComponent<Rigidbody2D>();
     }
 
     void Update()
@@ -56,13 +65,67 @@ public class BasicMeleeWeapon : WeaponBase
 
     float GetFinalRange()
     {
-        return baseAttackRange + bonusRange + playerStats.meleeRange;
+        return baseAttackRange + bonusRange + playerStats.meleeRange + playerStats.areaRangeBonus;
     }
 
     void UpdateAttackPointPosition()
     {
-        Vector2 dir = movement.LastMoveDirection;
+        Vector2 dir = GetAttackDirection();
+
         attackPoint.localPosition = dir * attackPointDistance;
+    }
+
+    Vector2 GetAttackDirection()
+    {
+        if (rb == null || rb.linearVelocity.sqrMagnitude <= 0.05f)
+        {
+            return lastAttackDirection;
+        }
+
+        Vector2 currentDirection = rb.linearVelocity.normalized;
+
+        // Si la dirección actual es diagonal, la aceptamos al instante.
+        if (IsDiagonalDirection(currentDirection))
+        {
+            lastAttackDirection = currentDirection;
+            candidateAttackDirection = currentDirection;
+            candidateDirectionTimer = 0f;
+
+            return lastAttackDirection;
+        }
+
+        // Si la última dirección buena era diagonal y ahora aparece una recta,
+        // esperamos un poco antes de machacar la diagonal.
+        if (IsDiagonalDirection(lastAttackDirection))
+        {
+            if (Vector2.Dot(candidateAttackDirection, currentDirection) < 0.98f)
+            {
+                candidateAttackDirection = currentDirection;
+                candidateDirectionTimer = 0f;
+            }
+            else
+            {
+                candidateDirectionTimer += Time.deltaTime;
+            }
+
+            if (candidateDirectionTimer >= directionChangeGraceTime)
+            {
+                lastAttackDirection = candidateAttackDirection;
+            }
+
+            return lastAttackDirection;
+        }
+
+        // Si no veníamos de una diagonal, actualizamos normal.
+        lastAttackDirection = currentDirection;
+        return lastAttackDirection;
+    }
+
+    bool IsDiagonalDirection(Vector2 direction)
+    {
+        direction.Normalize();
+
+        return Mathf.Abs(direction.x) > 0.35f && Mathf.Abs(direction.y) > 0.35f;
     }
 
     void PerformAttack()
@@ -243,7 +306,7 @@ public class BasicMeleeWeapon : WeaponBase
         PlayerStats ps = GetComponent<PlayerStats>();
         if (ps != null)
         {
-            radius += ps.meleeRange;
+            radius += ps.meleeRange + ps.areaRangeBonus;
         }
 
         Gizmos.color = Color.red;

@@ -12,6 +12,9 @@ public class PlayerHealth : MonoBehaviour
     private PlayerStats stats;
     private DamageFlash damageFlash;
 
+    [Header("Game Over")]
+    public float gameOverPauseDelay = 1f;
+
     [Header("Popup de esquiva")]
     public GameObject dodgePopupPrefab;
     public Vector3 dodgePopupOffset = new Vector3(0f, 1.2f, 0f);
@@ -195,6 +198,20 @@ public class PlayerHealth : MonoBehaviour
             rb.linearVelocity = Vector2.zero;
         }
 
+        if (ScreenAnnouncementManager.Instance != null)
+        {
+            ScreenAnnouncementManager.Instance.ShowPersistent(
+                "TE HAN DERROTADO",
+                "La noche se ha cobrado su precio."
+            );
+        }
+
+        StartCoroutine(PauseGameAfterDelay());
+    }
+
+    IEnumerator PauseGameAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(gameOverPauseDelay);
         Time.timeScale = 0f;
     }
 

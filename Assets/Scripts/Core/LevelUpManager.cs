@@ -1,12 +1,17 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class LevelUpManager : MonoBehaviour
 {
     public static LevelUpManager Instance;
 
     private const int OPTION_COUNT = 4;
+
+    [Header("Anuncio de subida de nivel")]
+    public float levelUpAnnouncementDelay = 1.2f;
+    private bool openingRewardMenu = false;
 
     [Header("Reroll con oro")]
     public int baseRerollCost = 5;
@@ -96,7 +101,26 @@ public class LevelUpManager : MonoBehaviour
     {
         InitializeReferences();
 
+        if (openingRewardMenu) return;
+
+        StartCoroutine(OpenRewardMenuRoutine(level));
+    }
+
+    IEnumerator OpenRewardMenuRoutine(int level)
+    {
+        openingRewardMenu = true;
         currentRewardLevel = level;
+
+        if (ScreenAnnouncementManager.Instance != null)
+        {
+            ScreenAnnouncementManager.Instance.ShowMessage(
+                "¡SUBIDA DE NIVEL!",
+                "Nivel " + level + " conseguido",
+                levelUpAnnouncementDelay
+            );
+        }
+
+        yield return new WaitForSecondsRealtime(levelUpAnnouncementDelay);
 
         if (weaponManager != null && IsWeaponMilestoneLevel(level) && weaponManager.CanOfferMoreWeapons())
         {
@@ -106,6 +130,8 @@ public class LevelUpManager : MonoBehaviour
         {
             OpenLevelUpMenu();
         }
+
+        openingRewardMenu = false;
     }
 
     public bool IsWeaponMilestoneLevel(int level)
@@ -493,7 +519,7 @@ public class LevelUpManager : MonoBehaviour
                 break;
 
             case "meleerange":
-                stats.meleeRange += GetMeleeRangeValue(option.rarity);
+                stats.areaRangeBonus += GetMeleeRangeValue(option.rarity);
                 break;
 
             case "projectilespeed":
@@ -532,6 +558,10 @@ public class LevelUpManager : MonoBehaviour
             if (weaponManager.HasActiveWeapon("melee"))
             {
                 pool.Add("melee");
+            }
+
+            if (weaponManager.HasActiveWeapon("melee") || weaponManager.HasActiveWeapon("toxic_aura"))
+            {
                 pool.Add("meleerange");
             }
 
@@ -539,6 +569,20 @@ public class LevelUpManager : MonoBehaviour
             {
                 pool.Add("ranged");
                 pool.Add("projectilespeed");
+            }
+
+            if (weaponManager.HasActiveWeapon("boomerang"))
+            {
+                pool.Add("ranged");
+                pool.Add("bleed");
+                pool.Add("statuseffect");
+            }
+
+            if (weaponManager.HasActiveWeapon("toxic_aura"))
+            {
+                pool.Add("magic");
+                pool.Add("poison");
+                pool.Add("statuseffect");
             }
         }
 
@@ -686,8 +730,8 @@ public class LevelUpManager : MonoBehaviour
             case "meleerange":
                 return new UpgradeOption(
                     id,
-                    GetRarityPrefix(rarity) + " Alcance melee",
-                    "Tu alcance cuerpo a cuerpo aumenta en +" + GetMeleeRangeValue(rarity).ToString("0.##") + ".",
+                    GetRarityPrefix(rarity) + " Área de ataque",
+                    "Aumenta el rango de tus ataques cercanos y auras en +" + GetMeleeRangeValue(rarity).ToString("0.##") + ".",
                     rarity
                 );
 

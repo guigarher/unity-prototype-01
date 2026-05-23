@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections;
 
 public class BaseCore : MonoBehaviour
 {
@@ -7,6 +8,9 @@ public class BaseCore : MonoBehaviour
     [Header("Escudo temporal")]
     public int currentShield = 0;
     private DamageFlash damageFlash;
+
+    [Header("Game Over")]
+    public float gameOverPauseDelay = 1f;
 
     [Header("Reglas de daño")]
     public bool onlyTakeDamageAtNight = true;
@@ -150,13 +154,27 @@ public class BaseCore : MonoBehaviour
 
         Debug.Log("La base ha sido destruida. Game Over.");
 
+        if (ScreenAnnouncementManager.Instance != null)
+        {
+            ScreenAnnouncementManager.Instance.ShowPersistent(
+                "BASE DESTRUIDA",
+                "La granja ha caído."
+            );
+        }
+
         OnBaseDestroyed?.Invoke();
 
-        Time.timeScale = 0f;
+        StartCoroutine(PauseGameAfterDelay());
     }
 
     void NotifyHealthChanged()
     {
         OnBaseHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
+
+    IEnumerator PauseGameAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(gameOverPauseDelay);
+        Time.timeScale = 0f;
     }
 }

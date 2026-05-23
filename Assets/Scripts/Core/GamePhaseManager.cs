@@ -11,6 +11,12 @@ public class GamePhaseManager : MonoBehaviour
 {
     public static GamePhaseManager Instance;
 
+    [Header("Anuncios visuales")]
+    public bool showPhaseAnnouncements = true;
+    public bool showInitialDayAnnouncement = false;
+
+    private bool hasStartedFirstPhase = false;
+
     [Header("Fase actual")]
     public GamePhase currentPhase = GamePhase.Day;
 
@@ -64,6 +70,8 @@ public class GamePhaseManager : MonoBehaviour
         }
 
         OnPhaseChanged?.Invoke(currentPhase);
+        ShowPhaseAnnouncement(currentPhase);
+        hasStartedFirstPhase = true;
     }
 
     void SwitchPhase()
@@ -101,5 +109,29 @@ public class GamePhaseManager : MonoBehaviour
         }
 
         return nightDuration;
+    }
+
+    void ShowPhaseAnnouncement(GamePhase phase)
+    {
+        if (!showPhaseAnnouncements) return;
+        if (!hasStartedFirstPhase && !showInitialDayAnnouncement) return;
+        if (ScreenAnnouncementManager.Instance == null) return;
+
+        if (phase == GamePhase.Night)
+        {
+            ScreenAnnouncementManager.Instance.ShowMessage(
+                "CAE LA NOCHE",
+                "La base viene a repostar. Defiéndela.",
+                2f
+            );
+        }
+        else
+        {
+            ScreenAnnouncementManager.Instance.ShowMessage(
+                "AMANECE",
+                "Has sobrevivido a la noche.",
+                2f
+            );
+        }
     }
 }

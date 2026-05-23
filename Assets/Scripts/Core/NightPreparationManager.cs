@@ -156,13 +156,13 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "wood_damage",
                     "Combustión agresiva",
-                    "Esta noche: +25% daño general.\nPermanente: +3% daño general.",
+                    "NOCHE: +40% daño general.\nPERMANENTE: +3% daño general.",
                     8,
                     0,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.Damage, 0.25f),
+                        NightEffect.Night(NightEffectType.Damage, 0.40f),
                         NightEffect.Permanent(NightEffectType.Damage, 0.03f)
                     }
                 );
@@ -171,13 +171,13 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "wood_attack_speed",
                     "Vapor a presión",
-                    "Esta noche: +25% velocidad de ataque.\nPermanente: +3% velocidad de ataque.",
+                    "NOCHE: +75% velocidad de ataque.\nPERMANENTE: +3% velocidad de ataque.",
                     8,
                     0,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.AttackSpeed, 0.25f),
+                        NightEffect.Night(NightEffectType.AttackSpeed, 0.75f),
                         NightEffect.Permanent(NightEffectType.AttackSpeed, 0.03f)
                     }
                 );
@@ -186,13 +186,13 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "wood_crit",
                     "Mira de latón",
-                    "Esta noche: +15% crítico.\nPermanente: +2% crítico.",
+                    "NOCHE: +20% probabilidad de crítico.\nPERMANENTE: +2% probabilidad de crítico.",
                     7,
                     0,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.CritChance, 0.15f),
+                        NightEffect.Night(NightEffectType.CritChance, 0.20f),
                         NightEffect.Permanent(NightEffectType.CritChance, 0.02f)
                     }
                 );
@@ -201,13 +201,13 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "wood_melee_range",
                     "Guadaña expansiva",
-                    "Esta noche: +0.50 rango melee.\nPermanente: +0.12 rango melee.",
+                    "NOCHE: +0.75 rango melee.\nPERMANENTE: +0.12 rango melee.",
                     7,
                     0,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.MeleeRange, 0.50f),
+                        NightEffect.Night(NightEffectType.MeleeRange, 0.75f),
                         NightEffect.Permanent(NightEffectType.MeleeRange, 0.12f)
                     }
                 );
@@ -216,7 +216,7 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "wood_projectile",
                     "Munición de vapor",
-                    "Esta noche: +1 proyectil extra.\nPermanente: +8% velocidad de proyectil.",
+                    "NOCHE: +1 proyectil extra.\nPERMANENTE: +8% velocidad de proyectil.",
                     10,
                     0,
                     0,
@@ -239,13 +239,13 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "stone_dodge",
                     "Reflejos minerales",
-                    "Esta noche: +12% esquiva.\nPermanente: +2% esquiva.",
+                    "NOCHE: +18% esquiva.\nPERMANENTE: +2% esquiva.",
                     0,
                     7,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.DodgeChance, 0.12f),
+                        NightEffect.Night(NightEffectType.DodgeChance, 0.18f),
                         NightEffect.Permanent(NightEffectType.DodgeChance, 0.02f)
                     }
                 );
@@ -254,14 +254,14 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "stone_armor",
                     "Plumas blindadas",
-                    "Esta noche: +2 armadura.\nPermanente: +5 vida máxima.",
+                    "NOCHE: +4 armadura.\nPERMANENTE: +1 armadura.",
                     0,
                     8,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.Armor, 2f),
-                        NightEffect.Permanent(NightEffectType.MaxHealth, 5f)
+                        NightEffect.Night(NightEffectType.Armor, 4f),
+                        NightEffect.Permanent(NightEffectType.Armor, 1f)
                     }
                 );
 
@@ -269,13 +269,13 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "stone_health",
                     "Corazón reforzado",
-                    "Esta noche: +20 vida máxima.\nPermanente: +8 vida máxima.",
+                    "NOCHE: +40 vida máxima.\nPERMANENTE: +8 vida máxima.",
                     0,
                     8,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.MaxHealth, 20f),
+                        NightEffect.Night(NightEffectType.MaxHealth, 40f),
                         NightEffect.Permanent(NightEffectType.MaxHealth, 8f)
                     }
                 );
@@ -284,15 +284,16 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "stone_defense_mix",
                     "Instinto defensivo",
-                    "Esta noche: +6% esquiva y +1 armadura.\nPermanente: +4 vida máxima.",
+                    "NOCHE: +10% esquiva y +2 armadura.\nPERMANENTE: +1% esquiva y +1 armadura.",
                     0,
                     9,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.DodgeChance, 0.06f),
-                        NightEffect.Night(NightEffectType.Armor, 1f),
-                        NightEffect.Permanent(NightEffectType.MaxHealth, 4f)
+                        NightEffect.Night(NightEffectType.DodgeChance, 0.10f),
+                        NightEffect.Night(NightEffectType.Armor, 2f),
+                        NightEffect.Permanent(NightEffectType.DodgeChance, 0.01f),
+                        NightEffect.Permanent(NightEffectType.Armor, 1f)
                     }
                 );
         }
@@ -305,22 +306,26 @@ public class NightPreparationManager : MonoBehaviour
         string title;
         string description;
 
-        bool useRegenBase = Random.value < 0.5f;
+        bool useRegen = Random.value < 0.5f;
 
-        if (useRegenBase)
+        if (useRegen)
         {
             title = "Sistema hidráulico inestable";
-            description = "Esta noche: +0.8 regeneración de vida.\nPermanente: +25 vida máxima de base.";
+            description =
+                "NOCHE: +1.20 regeneración de vida.\n" +
+                "PERMANENTE: +8 vida máxima.";
 
-            effects.Add(NightEffect.Night(NightEffectType.HealthRegen, 0.8f));
-            effects.Add(NightEffect.Permanent(NightEffectType.BaseMaxHealth, 25f));
+            effects.Add(NightEffect.Night(NightEffectType.HealthRegen, 1.20f));
+            effects.Add(NightEffect.Permanent(NightEffectType.MaxHealth, 8f));
         }
         else
         {
             title = "Motor de vapor ligero";
-            description = "Esta noche: +15% velocidad de movimiento.\nPermanente: +0.10 velocidad de movimiento.";
+            description =
+                "NOCHE: +35% velocidad de movimiento.\n" +
+                "PERMANENTE: +0.10 velocidad de movimiento.";
 
-            effects.Add(NightEffect.Night(NightEffectType.MoveSpeedPercent, 0.15f));
+            effects.Add(NightEffect.Night(NightEffectType.MoveSpeedPercent, 0.35f));
             effects.Add(NightEffect.Permanent(NightEffectType.MoveSpeedFlat, 0.10f));
         }
 
@@ -383,33 +388,33 @@ public class NightPreparationManager : MonoBehaviour
         switch (roll)
         {
             case 0:
-                night = NightEffect.Night(NightEffectType.Damage, 0.10f);
+                night = NightEffect.Night(NightEffectType.Damage, 0.15f);
                 permanent = NightEffect.Permanent(NightEffectType.Damage, 0.01f);
-                text = "Extra: +10% daño esta noche y +1% daño permanente.";
+                text = "EXTRA OFENSIVO: +15% daño esta noche y +1% daño permanente.";
                 return;
 
             case 1:
-                night = NightEffect.Night(NightEffectType.AttackSpeed, 0.10f);
+                night = NightEffect.Night(NightEffectType.AttackSpeed, 0.20f);
                 permanent = NightEffect.Permanent(NightEffectType.AttackSpeed, 0.01f);
-                text = "Extra: +10% velocidad de ataque esta noche y +1% permanente.";
+                text = "EXTRA OFENSIVO: +20% velocidad de ataque esta noche y +1% permanente.";
                 return;
 
             case 2:
-                night = NightEffect.Night(NightEffectType.CritChance, 0.06f);
+                night = NightEffect.Night(NightEffectType.CritChance, 0.08f);
                 permanent = NightEffect.Permanent(NightEffectType.CritChance, 0.01f);
-                text = "Extra: +6% crítico esta noche y +1% crítico permanente.";
+                text = "EXTRA OFENSIVO: +8% crítico esta noche y +1% crítico permanente.";
                 return;
 
             case 3:
-                night = NightEffect.Night(NightEffectType.MeleeRange, 0.20f);
-                permanent = NightEffect.Permanent(NightEffectType.MeleeRange, 0.05f);
-                text = "Extra: +0.20 rango melee esta noche y +0.05 permanente.";
+                night = NightEffect.Night(NightEffectType.MeleeRange, 0.30f);
+                permanent = NightEffect.Permanent(NightEffectType.MeleeRange, 0.04f);
+                text = "EXTRA OFENSIVO: +0.30 rango melee esta noche y +0.04 permanente.";
                 return;
 
             default:
                 night = NightEffect.Night(NightEffectType.ProjectileCount, 1f);
-                permanent = NightEffect.Permanent(NightEffectType.ProjectileSpeed, 0.04f);
-                text = "Extra: +1 proyectil esta noche y +4% velocidad de proyectil permanente.";
+                permanent = NightEffect.Permanent(NightEffectType.ProjectileSpeed, 0.03f);
+                text = "EXTRA OFENSIVO: +1 proyectil esta noche y +3% velocidad de proyectil permanente.";
                 extraWoodCost = 2;
                 extraStoneCost = 1;
                 return;
@@ -422,32 +427,26 @@ public class NightPreparationManager : MonoBehaviour
         out string text
     )
     {
-        int roll = Random.Range(0, 4);
+        int roll = Random.Range(0, 3);
 
         switch (roll)
         {
             case 0:
-                night = NightEffect.Night(NightEffectType.DodgeChance, 0.05f);
+                night = NightEffect.Night(NightEffectType.DodgeChance, 0.08f);
                 permanent = NightEffect.Permanent(NightEffectType.DodgeChance, 0.01f);
-                text = "Extra: +5% esquiva esta noche y +1% esquiva permanente.";
+                text = "EXTRA DEFENSIVO: +8% esquiva esta noche y +1% esquiva permanente.";
                 return;
 
             case 1:
-                night = NightEffect.Night(NightEffectType.Armor, 1f);
-                permanent = NightEffect.Permanent(NightEffectType.MaxHealth, 2f);
-                text = "Extra: +1 armadura esta noche y +2 vida máxima permanente.";
-                return;
-
-            case 2:
-                night = NightEffect.Night(NightEffectType.MaxHealth, 10f);
-                permanent = NightEffect.Permanent(NightEffectType.MaxHealth, 2f);
-                text = "Extra: +10 vida máxima esta noche y +2 permanente.";
+                night = NightEffect.Night(NightEffectType.Armor, 2f);
+                permanent = NightEffect.Permanent(NightEffectType.Armor, 1f);
+                text = "EXTRA DEFENSIVO: +2 armadura esta noche y +1 armadura permanente.";
                 return;
 
             default:
-                night = NightEffect.Night(NightEffectType.BaseRepair, 25f);
-                permanent = NightEffect.Permanent(NightEffectType.BaseMaxHealth, 15f);
-                text = "Extra: repara +25 base esta noche y +15 vida máxima de base permanente.";
+                night = NightEffect.Night(NightEffectType.MaxHealth, 15f);
+                permanent = NightEffect.Permanent(NightEffectType.MaxHealth, 3f);
+                text = "EXTRA DEFENSIVO: +15 vida máxima esta noche y +3 vida máxima permanente.";
                 return;
         }
     }
@@ -462,13 +461,13 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "base_shield",
                     "Escudo del núcleo",
-                    "Esta noche: la base gana +50 de escudo.\nPermanente: +25 vida máxima de base.",
+                    "NOCHE: la base gana +80 de escudo.\nPERMANENTE: +25 vida máxima de base.",
                     6,
                     8,
                     3,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.BaseShield, 50f),
+                        NightEffect.Night(NightEffectType.BaseShield, 80f),
                         NightEffect.Permanent(NightEffectType.BaseMaxHealth, 25f)
                     }
                 );
@@ -477,13 +476,13 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "base_pulse",
                     "Pulso de caldera",
-                    "Esta noche: la base hace daño en área cada pocos segundos.\nPermanente: +20 vida máxima de base.",
+                    "NOCHE: la base hace 6 de daño en área cada pocos segundos.\nPERMANENTE: +20 vida máxima de base.",
                     8,
                     8,
                     5,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.BasePulseDamage, 4f),
+                        NightEffect.Night(NightEffectType.BasePulseDamage, 6f),
                         NightEffect.Permanent(NightEffectType.BaseMaxHealth, 20f)
                     }
                 );
@@ -492,7 +491,7 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "base_big_repair",
                     "Reparación mayor",
-                    "Esta noche: repara +100 vida de base.\nPermanente: +15 vida máxima de base.",
+                    "NOCHE: repara +100 vida de base.\nPERMANENTE: +15 vida máxima de base.",
                     5,
                     8,
                     2,
@@ -507,13 +506,13 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "base_foundation",
                     "Muro de chatarra",
-                    "Esta noche: +30 escudo de base.\nPermanente: +50 vida máxima de base.",
+                    "NOCHE: +50 escudo de base.\nPERMANENTE: +50 vida máxima de base.",
                     2,
                     10,
                     4,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.BaseShield, 30f),
+                        NightEffect.Night(NightEffectType.BaseShield, 50f),
                         NightEffect.Permanent(NightEffectType.BaseMaxHealth, 50f)
                     }
                 );
@@ -529,8 +528,10 @@ public class NightPreparationManager : MonoBehaviour
         {
             NightPreparationOption option = currentOptions[i];
 
+            string purchasedText = option.purchased ? " [COMPRADA]" : "";
+
             Debug.Log(
-                (i + 1) + ": " + option.title +
+                (i + 1) + ": " + option.title + purchasedText +
                 " | Coste: " + option.GetCostText() +
                 "\n" + option.description
             );
@@ -547,6 +548,12 @@ public class NightPreparationManager : MonoBehaviour
         if (playerResources == null) return;
 
         NightPreparationOption option = currentOptions[index];
+
+        if (option.purchased)
+        {
+            Debug.Log("Ya compraste esta mejora: " + option.title);
+            return;
+        }
 
         if (!playerResources.CanSpendResources(option.woodCost, option.stoneCost))
         {
@@ -569,13 +576,17 @@ public class NightPreparationManager : MonoBehaviour
             }
         }
 
-        playerResources.SpendResources(option.woodCost, option.stoneCost);
+        if (!playerResources.SpendResources(option.woodCost, option.stoneCost))
+        {
+            Debug.Log("No se pudieron gastar los recursos de: " + option.title);
+            return;
+        }
 
         ApplyNightPreparationOption(option);
 
         Debug.Log("Comprado: " + option.title);
 
-        currentOptions.RemoveAt(index);
+        option.purchased = true;
 
         ShowNightPreparationInConsole();
     }
@@ -741,9 +752,15 @@ public class NightPreparationManager : MonoBehaviour
     {
         if (playerResources == null || baseCore == null) return;
 
+        if (repairAmount <= 0)
+        {
+            Debug.Log("La reparación no tiene cantidad válida.");
+            return;
+        }
+
         if (baseCore.currentHealth >= baseCore.maxHealth)
         {
-            Debug.Log("La base ya está al máximo de vida.");
+            Debug.Log("La base ya está al máximo de vida. No se gastan recursos.");
             return;
         }
 
@@ -753,7 +770,12 @@ public class NightPreparationManager : MonoBehaviour
             return;
         }
 
-        playerResources.SpendResources(repairWoodCost, repairStoneCost);
+        if (!playerResources.SpendResources(repairWoodCost, repairStoneCost))
+        {
+            Debug.Log("No se pudieron gastar los recursos de reparación.");
+            return;
+        }
+
         baseCore.Repair(repairAmount);
 
         Debug.Log("Base reparada +" + repairAmount + ". Recursos restantes: " + GetResourceDebugText());
@@ -910,6 +932,8 @@ public class NightPreparationOption
     public int coinCost;
 
     public List<NightEffect> effects;
+
+    public bool purchased = false;
 
     public NightPreparationOption(
         string id,
