@@ -1,11 +1,30 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+public enum WeaponTag
+{
+    Melee,
+    Ranged,
+    Projectile,
+    Area,
+    Poison,
+    Bleed,
+    Magic
+}
+
 public abstract class WeaponBase : MonoBehaviour
 {
     [Header("Info arma")]
     public string weaponId;
     public string weaponName;
+
+    [Header("Etiquetas")]
+    public List<WeaponTag> weaponTags = new List<WeaponTag>();
+
+    public bool HasTag(WeaponTag tag)
+    {
+        return weaponTags.Contains(tag);
+    }
     public bool isActiveWeapon = false;
 
     [Header("Progresión")]

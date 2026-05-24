@@ -54,7 +54,7 @@ public class EnemyStatusEffects : MonoBehaviour
                 break;
             }
 
-            enemyHealth.TakeDamage(totalBleedDamagePerTick, false);
+            enemyHealth.TakeDamage(totalBleedDamagePerTick, DamagePopupType.Bleed);
         }
 
         currentBleedStacks = 0;
@@ -97,7 +97,7 @@ public class EnemyStatusEffects : MonoBehaviour
             }
 
             // El veneno hace daño inmediatamente al empezar.
-            enemyHealth.TakeDamage(totalPoisonDamagePerTick, false);
+            enemyHealth.TakeDamage(totalPoisonDamagePerTick, DamagePopupType.Poison);
 
             yield return new WaitForSeconds(tickInterval);
 

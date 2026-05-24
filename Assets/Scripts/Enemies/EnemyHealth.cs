@@ -60,6 +60,13 @@ public class EnemyHealth : MonoBehaviour
 
     public void TakeDamage(int damage, bool isCrit)
     {
+        DamagePopupType popupType = isCrit ? DamagePopupType.Crit : DamagePopupType.Normal;
+
+        TakeDamage(damage, popupType);
+    }
+
+    public void TakeDamage(int damage, DamagePopupType popupType)
+    {
         if (isDead) return;
 
         damage = Mathf.Max(0, damage);
@@ -67,7 +74,7 @@ public class EnemyHealth : MonoBehaviour
         currentHealth -= damage;
         currentHealth = Mathf.Max(0, currentHealth);
 
-        ShowDamagePopup(damage, isCrit);
+        ShowDamagePopup(damage, popupType);
 
         if (enemyFlash != null)
         {
@@ -80,7 +87,7 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
-    void ShowDamagePopup(int damage, bool isCrit)
+    void ShowDamagePopup(int damage, DamagePopupType popupType)
     {
         if (damagePopupPrefab == null) return;
 
@@ -90,7 +97,7 @@ public class EnemyHealth : MonoBehaviour
             0f
         );
 
-        Vector3 spawnPosition = transform.position + Vector3.up * 0.4f + randomOffset;
+        Vector3 spawnPosition = transform.position + Vector3.up * 0.4f + popupOffset + randomOffset;
 
         GameObject popupObject = Instantiate(
             damagePopupPrefab,
@@ -102,7 +109,7 @@ public class EnemyHealth : MonoBehaviour
 
         if (popup != null)
         {
-            popup.Setup(damage, isCrit);
+            popup.Setup(damage, popupType);
         }
     }
 

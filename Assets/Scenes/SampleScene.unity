@@ -348,6 +348,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAutoAttack
   weaponId: ranged
   weaponName: Pistola
+  weaponTags: 0100000002000000
   isActiveWeapon: 0
   weaponLevel: 0
   maxLevel: 15
@@ -436,6 +437,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BasicMeleeWeapon
   weaponId: melee
   weaponName: Espada
+  weaponTags: 0000000003000000
   isActiveWeapon: 0
   weaponLevel: 0
   maxLevel: 15
@@ -528,6 +530,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoomerangWeapon
   weaponId: boomerang
   weaponName: Boomerang de chatarra
+  weaponTags: 0100000005000000
   isActiveWeapon: 0
   weaponLevel: 0
   maxLevel: 15
@@ -551,6 +554,7 @@ MonoBehaviour:
   bleedChance: 1
   allowOnlyOneBoomerang: 1
   useProjectileCountBonus: 0
+  directionChangeGraceTime: 0.02
 --- !u!114 &164040111
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -565,6 +569,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ToxicAuraWeapon
   weaponId: toxic_aura
   weaponName: "Fuga t\xF3xica"
+  weaponTags: 0400000003000000
   isActiveWeapon: 0
   weaponLevel: 0
   maxLevel: 15

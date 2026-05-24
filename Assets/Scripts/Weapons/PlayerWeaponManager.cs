@@ -159,4 +159,19 @@ public class PlayerWeaponManager : MonoBehaviour
     {
         return GetInactiveWeapons().Count;
     }
+
+    public bool HasActiveWeaponWithTag(WeaponTag tag)
+    {
+        if (allWeapons == null) RefreshWeaponList();
+
+        foreach (WeaponBase weapon in allWeapons)
+        {
+            if (weapon != null && weapon.isActiveWeapon && weapon.HasTag(tag))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -101,7 +101,6 @@ public class ToxicAuraWeapon : WeaponBase
         int finalContactDamage = Mathf.RoundToInt(
             contactDamagePerPulse *
             playerStats.damageMultiplier *
-            playerStats.magicDamageMultiplier *
             playerStats.poisonDamageMultiplier
         );
 
@@ -119,9 +118,7 @@ public class ToxicAuraWeapon : WeaponBase
             return;
         }
 
-        float finalPoisonChance = Mathf.Clamp01(
-            poisonApplyChance + playerStats.statusEffectChance
-        );
+        float finalPoisonChance = Mathf.Clamp01(poisonApplyChance);
 
         if (Random.value > finalPoisonChance) return;
 
@@ -129,7 +126,6 @@ public class ToxicAuraWeapon : WeaponBase
             poisonDamagePerTick *
             weaponPoisonMultiplier *
             playerStats.damageMultiplier *
-            playerStats.magicDamageMultiplier *
             playerStats.poisonDamageMultiplier
         );
 

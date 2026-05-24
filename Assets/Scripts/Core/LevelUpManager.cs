@@ -307,7 +307,7 @@ public class LevelUpManager : MonoBehaviour
         // Regeneración ahora sí es una mejora especial legendaria real.
         pool.Add("regen");
 
-        if (weaponManager != null && weaponManager.HasActiveWeapon("ranged"))
+        if (weaponManager != null && weaponManager.HasActiveWeaponWithTag(WeaponTag.Projectile))
         {
             bool projectileCountCanAppear =
                 currentRewardLevel - lastProjectileCountOfferedLevel >= projectileCountMinLevelsBetweenOffers;
@@ -555,34 +555,39 @@ public class LevelUpManager : MonoBehaviour
 
         if (weaponManager != null)
         {
-            if (weaponManager.HasActiveWeapon("melee"))
+            if (weaponManager.HasActiveWeaponWithTag(WeaponTag.Melee))
             {
                 pool.Add("melee");
             }
 
-            if (weaponManager.HasActiveWeapon("melee") || weaponManager.HasActiveWeapon("toxic_aura"))
+            if (weaponManager.HasActiveWeaponWithTag(WeaponTag.Ranged))
+            {
+                pool.Add("ranged");
+            }
+
+            if (weaponManager.HasActiveWeaponWithTag(WeaponTag.Area))
             {
                 pool.Add("meleerange");
             }
 
-            if (weaponManager.HasActiveWeapon("ranged"))
+            if (weaponManager.HasActiveWeaponWithTag(WeaponTag.Projectile))
             {
-                pool.Add("ranged");
                 pool.Add("projectilespeed");
             }
 
-            if (weaponManager.HasActiveWeapon("boomerang"))
+            if (weaponManager.HasActiveWeaponWithTag(WeaponTag.Poison))
             {
-                pool.Add("ranged");
-                pool.Add("bleed");
-                pool.Add("statuseffect");
+                pool.Add("poison");
             }
 
-            if (weaponManager.HasActiveWeapon("toxic_aura"))
+            if (weaponManager.HasActiveWeaponWithTag(WeaponTag.Bleed))
+            {
+                pool.Add("bleed");
+            }
+
+            if (weaponManager.HasActiveWeaponWithTag(WeaponTag.Magic))
             {
                 pool.Add("magic");
-                pool.Add("poison");
-                pool.Add("statuseffect");
             }
         }
 

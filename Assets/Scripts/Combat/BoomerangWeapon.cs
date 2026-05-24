@@ -56,16 +56,15 @@ public class BoomerangWeapon : WeaponBase
         rb = GetComponent<Rigidbody2D>();
     }
 
-    void Update()
+   void Update()
     {
         if (!isActiveWeapon) return;
         if (playerStats == null || boomerangProjectilePrefab == null) return;
 
+        UpdateThrowDirectionMemory();
+
         int maxBoomerangs = GetMaxActiveBoomerangs();
 
-        // Si ya tenemos el máximo de boomerangs activos,
-        // no seguimos contando el cooldown.
-        // Esto evita que al volver a veces dispare instantáneo y a veces tarde raro.
         if (activeBoomerangs >= maxBoomerangs)
         {
             return;
@@ -158,9 +157,7 @@ public class BoomerangWeapon : WeaponBase
 
         finalBleedDamagePerTick = Mathf.Max(1, finalBleedDamagePerTick);
 
-        float finalBleedChance = Mathf.Clamp01(
-            bleedChance + playerStats.statusEffectChance
-        );
+        float finalBleedChance = Mathf.Clamp01(bleedChance);
 
         boomerang.Initialize(
             this,
@@ -187,25 +184,31 @@ public class BoomerangWeapon : WeaponBase
 
     Vector2 GetThrowDirection()
     {
+        if (lastThrowDirection.sqrMagnitude <= 0.01f)
+        {
+            return Vector2.right;
+        }
+
+        return lastThrowDirection.normalized;
+    }
+
+    void UpdateThrowDirectionMemory()
+    {
         if (rb == null || rb.linearVelocity.sqrMagnitude <= 0.05f)
         {
-            return lastThrowDirection;
+            return;
         }
 
         Vector2 currentDirection = rb.linearVelocity.normalized;
 
-        // Si la dirección actual es diagonal, la aceptamos al instante.
         if (IsDiagonalDirection(currentDirection))
         {
             lastThrowDirection = currentDirection;
             candidateThrowDirection = currentDirection;
             candidateDirectionTimer = 0f;
-
-            return lastThrowDirection;
+            return;
         }
 
-        // Si veníamos de una diagonal y ahora aparece una recta,
-        // esperamos un poco antes de machacar la diagonal.
         if (IsDiagonalDirection(lastThrowDirection))
         {
             if (Vector2.Dot(candidateThrowDirection, currentDirection) < 0.98f)
@@ -223,12 +226,10 @@ public class BoomerangWeapon : WeaponBase
                 lastThrowDirection = candidateThrowDirection;
             }
 
-            return lastThrowDirection;
+            return;
         }
 
-        // Si no veníamos de diagonal, actualizamos normal.
         lastThrowDirection = currentDirection;
-        return lastThrowDirection;
     }
 
     bool IsDiagonalDirection(Vector2 direction)
