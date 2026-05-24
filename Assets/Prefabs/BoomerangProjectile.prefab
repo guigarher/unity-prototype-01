@@ -136,6 +136,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cb248091a3781c48ad55d996f727ac8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoomerangProjectile
+  visualRoot: {fileID: 7714208377325648082}
+  visualReferenceHitRadius: 1
+  scaleVisualWithHitRadius: 1
   outwardSpeed: 16
   returnSpeed: 18
   speedChangeRate: 25

@@ -316,8 +316,10 @@ public class BoomerangWeapon : WeaponBase
                 break;
 
             case "boomerang_size":
-                hitRadius += GetSizeBonus(option.rarity);
-                sideDistance += GetSizeBonus(option.rarity) * 1.5f;
+                float sizeBonus = GetSizeBonus(option.rarity);
+
+                hitRadius += sizeBonus;
+                sideDistance += sizeBonus * 1.5f;
                 break;
 
             case "boomerang_bleed":

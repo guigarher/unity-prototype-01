@@ -12,6 +12,10 @@ public class ToxicAuraWeapon : WeaponBase
     public float applyInterval = 0.5f;
     public LayerMask enemyLayer;
 
+    [Header("Escalado de área")]
+    public float globalAreaBonusMultiplier = 0.35f;
+    public float maxFinalAuraRadius = 4.5f;
+
     [Header("Veneno")]
     public int poisonDamagePerTick = 20;
     public float poisonDuration = 3.5f;
@@ -87,12 +91,16 @@ public class ToxicAuraWeapon : WeaponBase
 
     float GetFinalAuraRadius()
     {
-        if (playerStats == null)
+        float globalAreaBonus = 0f;
+
+        if (playerStats != null)
         {
-            return auraRadius;
+            globalAreaBonus = playerStats.areaRangeBonus * globalAreaBonusMultiplier;
         }
 
-        return auraRadius + playerStats.areaRangeBonus;
+        float finalRadius = auraRadius + globalAreaBonus;
+
+        return Mathf.Min(finalRadius, maxFinalAuraRadius);
     }
     void ApplyContactDamage(EnemyHealth enemyHealth)
     {
@@ -173,9 +181,7 @@ public class ToxicAuraWeapon : WeaponBase
 
     float GetCurrentApplyInterval()
     {
-        float finalInterval = applyInterval / playerStats.attackSpeedMultiplier;
-
-        return Mathf.Max(0.15f, finalInterval);
+        return Mathf.Max(0.15f, applyInterval);
     }
 
     void UpdateAuraVisual()
@@ -358,13 +364,16 @@ public class ToxicAuraWeapon : WeaponBase
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.green;
+
         float radius = auraRadius;
 
         PlayerStats ps = GetComponent<PlayerStats>();
         if (ps != null)
         {
-            radius += ps.areaRangeBonus;
+            radius += ps.areaRangeBonus * globalAreaBonusMultiplier;
         }
+
+        radius = Mathf.Min(radius, maxFinalAuraRadius);
 
         Gizmos.DrawWireSphere(transform.position, radius);
     }

@@ -534,14 +534,14 @@ MonoBehaviour:
   isActiveWeapon: 0
   weaponLevel: 0
   maxLevel: 15
-  knockbackForce: 0
-  knockbackDuration: 0
+  knockbackForce: 2.5
+  knockbackDuration: 0.08
   boomerangProjectilePrefab: {fileID: 6626115528430632748, guid: d11c5af5ed6a502488632fb0ed563bda, type: 3}
-  baseAttackCooldown: 1.2
+  baseAttackCooldown: 1
   spawnDistance: 0.8
   baseDamage: 150
-  flightDuration: 1.8
-  forwardDistance: 8
+  flightDuration: 1.5
+  forwardDistance: 9
   sideDistance: 3
   behindDistance: 3
   hitRadius: 1
@@ -579,6 +579,8 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 8
+  globalAreaBonusMultiplier: 0.35
+  maxFinalAuraRadius: 4.5
   poisonDamagePerTick: 25
   poisonDuration: 5
   poisonTickInterval: 1
@@ -862,6 +864,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   enemyPrefab: {fileID: 1413063666408216670, guid: 0fdddc9c5d206984fa1618714faa8e7a, type: 3}
   rangedEnemyPrefab: {fileID: 1413063666408216670, guid: a86062bdad30c1b458a3d6c1ff0cd7ad, type: 3}
+  exploderEnemyPrefab: {fileID: 1413063666408216670, guid: 7a6e71ce88ac4a545a899122c9067949, type: 3}
   player: {fileID: 164040098}
   gameplayCamera: {fileID: 519420031}
   spawnDistance: 16
@@ -896,6 +899,24 @@ MonoBehaviour:
   rangedSpawnDistanceExtraRange: 6
   rangedPackSpread: 2
   spawnRangedAroundBaseAtNight: 1
+  enableExploderEvents: 1
+  firstExploderEventDelay: 50
+  maxActiveExploders: 8
+  dayExploderEventsPerPhase: 1
+  dayExploderMinDelay: 25
+  dayExploderMaxDelay: 45
+  dayExploderGroupsPerEvent: 2
+  dayExploderPackSize: 3
+  nightExploderEventsPerPhase: 1
+  nightExploderMinDelay: 15
+  nightExploderMaxDelay: 35
+  nightExploderGroupsPerEvent: 2
+  nightExploderPackSize: 3
+  exploderSpawnDistance: 17
+  exploderSpawnDistanceExtraRange: 5
+  exploderPackSpread: 3
+  exploderDirectionJitterDegrees: 25
+  spawnExplodersAroundBaseAtNight: 0
 --- !u!4 &296372423
 Transform:
   m_ObjectHideFlags: 0

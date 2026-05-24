@@ -5,6 +5,7 @@ public class EnemySpawner : MonoBehaviour
     [Header("Referencias")]
     public GameObject enemyPrefab;
     public GameObject rangedEnemyPrefab;
+    public GameObject exploderEnemyPrefab;
     public Transform player;
     public Camera gameplayCamera;
 
@@ -62,8 +63,36 @@ public class EnemySpawner : MonoBehaviour
     public float rangedPackSpread = 2f;
     public bool spawnRangedAroundBaseAtNight = true;
 
+    [Header("Eventos de explosivos")]
+    public bool enableExploderEvents = true;
+    public float firstExploderEventDelay = 18f;
+    public int maxActiveExploders = 8;
+
+    [Header("Explosivos de día")]
+    public int dayExploderEventsPerPhase = 1;
+    public float dayExploderMinDelay = 18f;
+    public float dayExploderMaxDelay = 35f;
+    public int dayExploderGroupsPerEvent = 2;
+    public int dayExploderPackSize = 3;
+
+    [Header("Explosivos de noche")]
+    public int nightExploderEventsPerPhase = 1;
+    public float nightExploderMinDelay = 8f;
+    public float nightExploderMaxDelay = 18f;
+    public int nightExploderGroupsPerEvent = 2;
+    public int nightExploderPackSize = 3;
+
+    [Header("Spawn explosivos")]
+    public float exploderSpawnDistance = 17f;
+    public float exploderSpawnDistanceExtraRange = 5f;
+    public float exploderPackSpread = 1.6f;
+    public float exploderDirectionJitterDegrees = 25f;
+    public bool spawnExplodersAroundBaseAtNight = false;
+
     private float spawnTimer;
     private float rangedSpawnTimer;
+    private float exploderEventTimer;
+    private int exploderEventsThisPhase = 0;
 
     void Start()
     {
@@ -84,6 +113,17 @@ public class EnemySpawner : MonoBehaviour
 
         spawnTimer = startSpawnInterval;
         rangedSpawnTimer = rangedStartDelay;
+        exploderEventTimer = firstExploderEventDelay;
+    }
+
+    void OnEnable()
+    {
+        GamePhaseManager.OnPhaseChanged += OnPhaseChanged;
+    }
+
+    void OnDisable()
+    {
+        GamePhaseManager.OnPhaseChanged -= OnPhaseChanged;
     }
 
     void Update()
@@ -92,6 +132,13 @@ public class EnemySpawner : MonoBehaviour
 
         HandleMeleeSpawning();
         HandleRangedSpawning();
+        HandleExploderEvents();
+    }
+
+    void OnPhaseChanged(GamePhase phase)
+    {
+        exploderEventsThisPhase = 0;
+        exploderEventTimer = GetCurrentExploderEventDelay();
     }
 
     void HandleMeleeSpawning()
@@ -118,6 +165,33 @@ public class EnemySpawner : MonoBehaviour
         {
             TrySpawnRangedPack();
             rangedSpawnTimer = GetCurrentRangedInterval();
+        }
+    }
+
+    void HandleExploderEvents()
+    {
+        if (!enableExploderEvents) return;
+        if (exploderEnemyPrefab == null) return;
+
+        int maxEventsThisPhase = GetCurrentMaxExploderEventsThisPhase();
+
+        if (exploderEventsThisPhase >= maxEventsThisPhase)
+        {
+            return;
+        }
+
+        exploderEventTimer -= Time.deltaTime;
+
+        if (exploderEventTimer <= 0f)
+        {
+            bool spawned = TrySpawnExploderAmbushEvent();
+
+            if (spawned)
+            {
+                exploderEventsThisPhase++;
+            }
+
+            exploderEventTimer = GetCurrentExploderEventDelay();
         }
     }
 
@@ -198,6 +272,68 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
+    bool TrySpawnExploderAmbushEvent()
+    {
+        int totalEnemies = CountAllEnemies();
+        int exploderEnemies = CountExploderEnemies();
+        int currentMaxEnemies = GetCurrentMaxEnemies();
+
+        if (totalEnemies >= currentMaxEnemies) return false;
+        if (exploderEnemies >= maxActiveExploders) return false;
+
+        int groupsToSpawn = GetCurrentExploderGroupsPerEvent();
+        int packSize = GetCurrentExploderPackSize();
+
+        int availableTotalSlots = currentMaxEnemies - totalEnemies;
+        int availableExploderSlots = maxActiveExploders - exploderEnemies;
+
+        int totalWanted = groupsToSpawn * packSize;
+        int totalCanSpawn = Mathf.Min(totalWanted, availableTotalSlots, availableExploderSlots);
+
+        if (totalCanSpawn <= 0) return false;
+
+        Vector3 spawnOrigin = GetExploderSpawnOrigin();
+
+        float randomAngle = Random.Range(0f, 360f);
+        int spawnedCount = 0;
+
+        for (int groupIndex = 0; groupIndex < groupsToSpawn; groupIndex++)
+        {
+            if (spawnedCount >= totalCanSpawn) break;
+
+            float angle = randomAngle + (360f / groupsToSpawn) * groupIndex;
+            Vector2 direction = DirectionFromAngle(angle);
+
+            Vector3 packCenter;
+
+            bool foundCenter = TryGetValidSpawnPositionInDirection(
+                spawnOrigin,
+                direction,
+                exploderSpawnDistance,
+                exploderSpawnDistanceExtraRange,
+                out packCenter
+            );
+
+            if (!foundCenter) continue;
+
+            int remainingAllowed = totalCanSpawn - spawnedCount;
+            int groupSpawnCount = Mathf.Min(packSize, remainingAllowed);
+
+            for (int i = 0; i < groupSpawnCount; i++)
+            {
+                Vector3 spawnPosition;
+
+                if (TryGetValidSpawnPositionNearPoint(packCenter, exploderPackSpread, out spawnPosition))
+                {
+                    SpawnEnemyAtPosition(exploderEnemyPrefab, spawnPosition);
+                    spawnedCount++;
+                }
+            }
+        }
+
+        return spawnedCount > 0;
+    }
+
     bool TryGetValidSpawnPositionAroundOrigin(
         Vector3 origin,
         float baseDistance,
@@ -217,6 +353,44 @@ public class EnemySpawner : MonoBehaviour
             float finalDistance = Random.Range(baseDistance, baseDistance + extraRange);
 
             Vector3 candidatePosition = origin + (Vector3)(randomDirection * finalDistance);
+
+            if (IsValidSpawnPosition(candidatePosition))
+            {
+                spawnPosition = candidatePosition;
+                return true;
+            }
+        }
+
+        spawnPosition = Vector3.zero;
+        return false;
+    }
+
+    bool TryGetValidSpawnPositionInDirection(
+        Vector3 origin,
+        Vector2 preferredDirection,
+        float baseDistance,
+        float extraRange,
+        out Vector3 spawnPosition
+    )
+    {
+        if (preferredDirection.sqrMagnitude <= 0.01f)
+        {
+            preferredDirection = Vector2.right;
+        }
+
+        preferredDirection.Normalize();
+
+        for (int i = 0; i < maxSpawnPositionAttempts; i++)
+        {
+            float angleOffset = Random.Range(
+                -exploderDirectionJitterDegrees,
+                exploderDirectionJitterDegrees
+            );
+
+            Vector2 finalDirection = RotateDirection(preferredDirection, angleOffset);
+            float finalDistance = Random.Range(baseDistance, baseDistance + extraRange);
+
+            Vector3 candidatePosition = origin + (Vector3)(finalDirection * finalDistance);
 
             if (IsValidSpawnPosition(candidatePosition))
             {
@@ -340,6 +514,19 @@ public class EnemySpawner : MonoBehaviour
         return player.position;
     }
 
+    Vector3 GetExploderSpawnOrigin()
+    {
+        if (spawnExplodersAroundBaseAtNight &&
+            GamePhaseManager.Instance != null &&
+            GamePhaseManager.Instance.IsNight() &&
+            BaseCore.Instance != null)
+        {
+            return BaseCore.Instance.transform.position;
+        }
+
+        return player.position;
+    }
+
     float GetCurrentSpawnInterval()
     {
         float minutes = GetElapsedMinutes();
@@ -388,6 +575,62 @@ public class EnemySpawner : MonoBehaviour
         return Random.Range(dayRangedMinPackSize, dayRangedMaxPackSize + 1);
     }
 
+    int GetCurrentMaxExploderEventsThisPhase()
+    {
+        bool isNight = GamePhaseManager.Instance != null && GamePhaseManager.Instance.IsNight();
+
+        return isNight ? nightExploderEventsPerPhase : dayExploderEventsPerPhase;
+    }
+
+    float GetCurrentExploderEventDelay()
+    {
+        bool isNight = GamePhaseManager.Instance != null && GamePhaseManager.Instance.IsNight();
+
+        if (isNight)
+        {
+            return Random.Range(nightExploderMinDelay, nightExploderMaxDelay);
+        }
+
+        return Random.Range(dayExploderMinDelay, dayExploderMaxDelay);
+    }
+
+    int GetCurrentExploderGroupsPerEvent()
+    {
+        bool isNight = GamePhaseManager.Instance != null && GamePhaseManager.Instance.IsNight();
+
+        return isNight ? nightExploderGroupsPerEvent : dayExploderGroupsPerEvent;
+    }
+
+    int GetCurrentExploderPackSize()
+    {
+        bool isNight = GamePhaseManager.Instance != null && GamePhaseManager.Instance.IsNight();
+
+        return isNight ? nightExploderPackSize : dayExploderPackSize;
+    }
+
+    Vector2 DirectionFromAngle(float degrees)
+    {
+        float radians = degrees * Mathf.Deg2Rad;
+
+        return new Vector2(
+            Mathf.Cos(radians),
+            Mathf.Sin(radians)
+        ).normalized;
+    }
+
+    Vector2 RotateDirection(Vector2 direction, float degrees)
+    {
+        float radians = degrees * Mathf.Deg2Rad;
+
+        float cos = Mathf.Cos(radians);
+        float sin = Mathf.Sin(radians);
+
+        return new Vector2(
+            direction.x * cos - direction.y * sin,
+            direction.x * sin + direction.y * cos
+        ).normalized;
+    }
+
     int CountAllEnemies()
     {
         return GameObject.FindGameObjectsWithTag("Enemy").Length;
@@ -409,6 +652,15 @@ public class EnemySpawner : MonoBehaviour
         );
 
         return rangedEnemies.Length;
+    }
+
+    int CountExploderEnemies()
+    {
+        EnemyExploder[] exploderEnemies = Object.FindObjectsByType<EnemyExploder>(
+            FindObjectsInactive.Exclude
+        );
+
+        return exploderEnemies.Length;
     }
 
     float GetElapsedMinutes()
@@ -448,6 +700,9 @@ public class EnemySpawner : MonoBehaviour
 
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(player.position, spawnDistance);
+
+            Gizmos.color = new Color(1f, 0.5f, 0f);
+            Gizmos.DrawWireSphere(player.position, exploderSpawnDistance);
         }
 
         if (BaseCore.Instance != null)

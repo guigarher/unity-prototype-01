@@ -9,6 +9,13 @@ public class BoomerangProjectile : MonoBehaviour
         Returning
     }
 
+    [Header("Visual ligado al hitbox")]
+    public Transform visualRoot;
+    public float visualReferenceHitRadius = 0.45f;
+    public bool scaleVisualWithHitRadius = true;
+
+    private Vector3 baseVisualScale = Vector3.one;
+
     [Header("Movimiento")]
     public float outwardSpeed = 12f;
     public float returnSpeed = 12f;
@@ -56,6 +63,28 @@ public class BoomerangProjectile : MonoBehaviour
     private Dictionary<EnemyHealth, float> hitCooldowns = new Dictionary<EnemyHealth, float>();
     private float sameEnemyHitCooldown = 0.20f;
 
+    void Awake()
+    {
+        if (visualRoot == null)
+        {
+            SpriteRenderer spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
+            if (spriteRenderer != null)
+            {
+                visualRoot = spriteRenderer.transform;
+            }
+            else
+            {
+                visualRoot = transform;
+            }
+        }
+
+        if (visualRoot != null)
+        {
+            baseVisualScale = visualRoot.localScale;
+        }
+    }
+
     public void Initialize(
         BoomerangWeapon ownerWeapon,
         Transform ownerTransform,
@@ -84,6 +113,7 @@ public class BoomerangProjectile : MonoBehaviour
 
         this.forwardDistance = forwardDistance;
         this.hitRadius = hitRadius;
+        UpdateVisualScaleFromHitRadius();
         this.enemyLayer = enemyLayer;
 
         this.bleedDamagePerTick = bleedDamagePerTick;
@@ -134,6 +164,17 @@ public class BoomerangProjectile : MonoBehaviour
         {
             DestroyBoomerang();
         }
+    }
+
+    void UpdateVisualScaleFromHitRadius()
+    {
+        if (!scaleVisualWithHitRadius) return;
+        if (visualRoot == null) return;
+        if (visualReferenceHitRadius <= 0f) return;
+
+        float scaleMultiplier = hitRadius / visualReferenceHitRadius;
+
+        visualRoot.localScale = baseVisualScale * scaleMultiplier;
     }
 
     void MoveOutwardWithCurve()

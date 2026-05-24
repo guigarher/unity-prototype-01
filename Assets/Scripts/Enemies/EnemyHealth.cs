@@ -1,7 +1,12 @@
 using UnityEngine;
+using System;
+using Random = UnityEngine.Random;
 
 public class EnemyHealth : MonoBehaviour
 {
+    [Header("Muerte")]
+    public bool destroyAutomaticallyOnDeath = true;
+
     [Header("Vida")]
     public int maxHealth = 4;
     public int currentHealth;
@@ -29,6 +34,8 @@ public class EnemyHealth : MonoBehaviour
 
     private bool isDead = false;
     private EnemyFlash enemyFlash;
+
+    public event Action OnDeath;
 
     void Awake()
     {
@@ -119,10 +126,15 @@ public class EnemyHealth : MonoBehaviour
 
         isDead = true;
 
+        OnDeath?.Invoke();
+
         DropXP();
         DropCoins();
 
-        Destroy(gameObject);
+        if (destroyAutomaticallyOnDeath)
+        {
+            Destroy(gameObject);
+        }
     }
 
     void DropXP()
