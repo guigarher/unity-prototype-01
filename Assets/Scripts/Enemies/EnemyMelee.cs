@@ -22,9 +22,21 @@ public class EnemyMelee : MonoBehaviour
 
     [Header("Attack")]
     public float attackStartRange = 1.2f;
-    public float attackHitRange = 1.6f;
+    public float attackHitRange = 1.1f;
+    public float attackHitOffset = 0.9f;
     public float attackWindUp = 0.5f;
     public float attackCooldown = 1f;
+
+    [Header("Aviso visual del ataque")]
+    public Transform attackWarningVisual;
+    public bool showAttackWarning = true;
+    public float warningStartAlpha = 0.12f;
+    public float warningEndAlpha = 0.65f;
+    public float warningHitFlashTime = 0.08f;
+
+    private SpriteRenderer attackWarningRenderer;
+    private Color attackWarningBaseColor = Color.red;
+    private float attackWarningProgress = 0f;
 
     [Header("Daño")]
     public int damage = 8;
@@ -33,6 +45,8 @@ public class EnemyMelee : MonoBehaviour
     private Rigidbody2D rb;
     private bool isAttacking = false;
     private float cooldownTimer = 0f;
+
+    private Vector2 lockedAttackDirection = Vector2.right;
 
     void Awake()
     {
@@ -49,7 +63,21 @@ public class EnemyMelee : MonoBehaviour
             playerTarget = playerObject.transform;
         }
 
+        CacheAttackWarningRenderer();
+        HideAttackWarning();
         UpdateTargetByPhase();
+    }
+
+    void CacheAttackWarningRenderer()
+    {
+        if (attackWarningVisual == null) return;
+
+        attackWarningRenderer = attackWarningVisual.GetComponentInChildren<SpriteRenderer>();
+
+        if (attackWarningRenderer != null)
+        {
+            attackWarningBaseColor = attackWarningRenderer.color;
+        }
     }
 
     void FixedUpdate()
@@ -71,6 +99,7 @@ public class EnemyMelee : MonoBehaviour
         if (isAttacking)
         {
             rb.linearVelocity = Vector2.zero;
+            UpdateAttackWarningVisual();
             return;
         }
 
@@ -192,20 +221,88 @@ public class EnemyMelee : MonoBehaviour
         isAttacking = true;
         rb.linearVelocity = Vector2.zero;
 
-        yield return new WaitForSeconds(attackWindUp);
+        LockAttackDirection();
 
-        if (target != null)
+        attackWarningProgress = 0f;
+        ShowAttackWarning();
+
+        float timer = 0f;
+
+        while (timer < attackWindUp)
         {
-            float distanceToTarget = GetEffectiveDistanceToTarget();
+            timer += Time.deltaTime;
+            attackWarningProgress = Mathf.Clamp01(timer / attackWindUp);
 
-            if (distanceToTarget <= attackHitRange)
-            {
-                DamageTarget();
-            }
+            UpdateAttackWarningVisual();
+
+            yield return null;
         }
+
+        attackWarningProgress = 1f;
+        UpdateAttackWarningVisual();
+
+        if (target != null && IsTargetInsideLockedAttackArea())
+        {
+            DamageTarget();
+        }
+
+        yield return new WaitForSeconds(warningHitFlashTime);
+
+        HideAttackWarning();
 
         cooldownTimer = attackCooldown;
         isAttacking = false;
+    }
+
+    void LockAttackDirection()
+    {
+        if (target == null)
+        {
+            lockedAttackDirection = Vector2.right;
+            return;
+        }
+
+        lockedAttackDirection = ((Vector2)target.position - (Vector2)transform.position).normalized;
+
+        if (lockedAttackDirection.sqrMagnitude < 0.01f)
+        {
+            lockedAttackDirection = Vector2.right;
+        }
+    }
+
+    Vector2 GetAttackCenter()
+    {
+        return (Vector2)transform.position + lockedAttackDirection * attackHitOffset;
+    }
+
+    bool IsTargetInsideLockedAttackArea()
+    {
+        if (target == null) return false;
+
+        Vector2 attackCenter = GetAttackCenter();
+
+        BaseCore baseCore = target.GetComponentInParent<BaseCore>();
+
+        if (baseCore != null)
+        {
+            float distanceToBase = Vector2.Distance(attackCenter, target.position);
+            distanceToBase -= baseCore.enemyAttackRadius;
+
+            return distanceToBase <= attackHitRange;
+        }
+
+        Collider2D targetCollider = target.GetComponentInChildren<Collider2D>();
+
+        if (targetCollider != null)
+        {
+            Vector2 closestPoint = targetCollider.ClosestPoint(attackCenter);
+            float distanceToCollider = Vector2.Distance(attackCenter, closestPoint);
+
+            return distanceToCollider <= attackHitRange;
+        }
+
+        float distanceToTargetCenter = Vector2.Distance(attackCenter, target.position);
+        return distanceToTargetCenter <= attackHitRange;
     }
 
     void DamageTarget()
@@ -226,13 +323,62 @@ public class EnemyMelee : MonoBehaviour
         }
     }
 
+    void ShowAttackWarning()
+    {
+        if (!showAttackWarning) return;
+        if (attackWarningVisual == null) return;
+
+        attackWarningVisual.gameObject.SetActive(true);
+        UpdateAttackWarningVisual();
+    }
+
+    void HideAttackWarning()
+    {
+        if (attackWarningVisual == null) return;
+
+        if (attackWarningRenderer != null)
+        {
+            Color color = attackWarningBaseColor;
+            color.a = 0f;
+            attackWarningRenderer.color = color;
+        }
+
+        attackWarningVisual.gameObject.SetActive(false);
+    }
+
+    void UpdateAttackWarningVisual()
+    {
+        if (!showAttackWarning) return;
+        if (attackWarningVisual == null) return;
+
+        Vector2 attackCenter = GetAttackCenter();
+
+        attackWarningVisual.position = attackCenter;
+        attackWarningVisual.localScale = Vector3.one * (attackHitRange * 2f);
+
+        if (attackWarningRenderer != null)
+        {
+            Color color = attackWarningBaseColor;
+            color.a = Mathf.Lerp(warningStartAlpha, warningEndAlpha, attackWarningProgress);
+            attackWarningRenderer.color = color;
+        }
+    }
+
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, attackStartRange);
 
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackHitRange);
+        Vector2 previewDirection = lockedAttackDirection;
+
+        if (previewDirection.sqrMagnitude < 0.01f)
+        {
+            previewDirection = Vector2.right;
+        }
+
+        Vector2 previewCenter = (Vector2)transform.position + previewDirection.normalized * attackHitOffset;
+        Gizmos.DrawWireSphere(previewCenter, attackHitRange);
 
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, separationRadius);
