@@ -17,10 +17,18 @@ public class EnemyHealth : MonoBehaviour
     [Range(0f, 1f)]
     public float healthScalingStrength = 0.15f;
 
-    [Header("Drops")]
-    public GameObject xpOrbPrefab;
-    public int xpOrbCount = 1;
+    [Header("Drops XP")]
+    public int xpValue = 1;
 
+    public GameObject blueXpOrbPrefab;
+    public int blueXpOrbValue = 1;
+
+    public GameObject purpleXpOrbPrefab;
+    public int purpleXpOrbValue = 3;
+
+    public float xpDropSpread = 0.5f;
+
+    [Header("Drops")]
     public GameObject coinPrefab;
 
     [Range(0f, 1f)]
@@ -139,12 +147,43 @@ public class EnemyHealth : MonoBehaviour
 
     void DropXP()
     {
-        if (xpOrbPrefab == null) return;
+        if (xpValue <= 0) return;
 
-        for (int i = 0; i < xpOrbCount; i++)
+        int remainingXP = xpValue;
+
+        while (purpleXpOrbPrefab != null &&
+            purpleXpOrbValue > 0 &&
+            remainingXP >= purpleXpOrbValue)
         {
-            Vector2 offset = Random.insideUnitCircle * 0.5f;
-            Instantiate(xpOrbPrefab, transform.position + (Vector3)offset, Quaternion.identity);
+            SpawnXPOrb(purpleXpOrbPrefab, purpleXpOrbValue);
+            remainingXP -= purpleXpOrbValue;
+        }
+
+        while (blueXpOrbPrefab != null &&
+            blueXpOrbValue > 0 &&
+            remainingXP > 0)
+        {
+            int valueToDrop = Mathf.Min(blueXpOrbValue, remainingXP);
+            SpawnXPOrb(blueXpOrbPrefab, valueToDrop);
+            remainingXP -= valueToDrop;
+        }
+    }
+
+    void SpawnXPOrb(GameObject prefab, int value)
+    {
+        Vector2 offset = Random.insideUnitCircle * xpDropSpread;
+
+        GameObject orbObject = Instantiate(
+            prefab,
+            transform.position + (Vector3)offset,
+            Quaternion.identity
+        );
+
+        XPOrb orb = orbObject.GetComponent<XPOrb>();
+
+        if (orb != null)
+        {
+            orb.xpValue = value;
         }
     }
 

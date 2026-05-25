@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 public class BasicRangedWeapon : WeaponBase
 {
-    private bool alternateSpreadSide = true;
-    private float weaponDamageMultiplier = 1f;
     [Header("Proyectil")]
     public GameObject bulletPrefab;
 
@@ -19,8 +17,20 @@ public class BasicRangedWeapon : WeaponBase
     [Header("Disparo múltiple")]
     public float spreadAngle = 12f;
 
-    private float attackTimer = 0f;
+    [Header("Mejoras específicas")]
+    public float commonBonus = 0.10f;
+    public float rareBonus = 0.15f;
+    public float epicBonus = 0.20f;
+    public float legendaryBonus = 0.25f;
+
+    private bool alternateSpreadSide = true;
+
+    private float weaponDamageMultiplier = 1f;
+    private float weaponAttackSpeedMultiplier = 1f;
+    private float weaponRangeMultiplier = 0f;
     private float weaponProjectileSpeedMultiplier = 1f;
+
+    private float attackTimer = 0f;
 
     void Update()
     {
@@ -34,10 +44,18 @@ public class BasicRangedWeapon : WeaponBase
         if (nearestEnemy != null && attackTimer <= 0f)
         {
             Shoot(nearestEnemy);
-
-            float cooldown = baseAttackCooldown / playerStats.attackSpeedMultiplier;
-            attackTimer = cooldown;
+            attackTimer = GetCurrentCooldown();
         }
+    }
+
+    float GetCurrentCooldown()
+    {
+        return baseAttackCooldown / (playerStats.attackSpeedMultiplier * weaponAttackSpeedMultiplier);
+    }
+
+    float GetFinalAttackRange()
+    {
+        return attackRange * (1f + weaponRangeMultiplier);
     }
 
     GameObject FindNearestEnemy()
@@ -46,6 +64,7 @@ public class BasicRangedWeapon : WeaponBase
 
         GameObject nearest = null;
         float minDistance = Mathf.Infinity;
+        float finalAttackRange = GetFinalAttackRange();
 
         foreach (GameObject enemy in enemies)
         {
@@ -53,7 +72,7 @@ public class BasicRangedWeapon : WeaponBase
 
             float distance = Vector2.Distance(transform.position, enemy.transform.position);
 
-            if (distance < minDistance && distance <= attackRange)
+            if (distance < minDistance && distance <= finalAttackRange)
             {
                 minDistance = distance;
                 nearest = enemy;
@@ -76,18 +95,14 @@ public class BasicRangedWeapon : WeaponBase
             playerStats.rangedDamageMultiplier
         );
 
-        // Siempre disparamos una bala directa al centro del enemigo
         SpawnBullet(baseDirection, finalDamage);
 
-        // Si solo hay una bala, terminamos aquí
         if (projectileCount <= 1)
         {
             return;
         }
 
         int extraProjectiles = projectileCount - 1;
-
-        // Para que con 2 balas no siempre se vaya hacia el mismo lado
         int firstSide = alternateSpreadSide ? 1 : -1;
 
         for (int i = 0; i < extraProjectiles; i++)
@@ -96,7 +111,6 @@ public class BasicRangedWeapon : WeaponBase
             int spreadStep = (i / 2) + 1;
 
             float currentAngle = spreadAngle * spreadStep * side;
-
             Vector2 newDirection = RotateVector(baseDirection, currentAngle);
 
             SpawnBullet(newDirection, finalDamage);
@@ -156,7 +170,7 @@ public class BasicRangedWeapon : WeaponBase
             new UpgradeOption(
                 "ranged_weapon_damage",
                 "[Arma] Semillas reforzadas",
-                "Esta arma a distancia gana daño.",
+                "Daño directo.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -165,7 +179,7 @@ public class BasicRangedWeapon : WeaponBase
             new UpgradeOption(
                 "ranged_weapon_speed",
                 "[Arma] Gatillo rápido",
-                "Esta arma a distancia reduce su cooldown.",
+                "Velocidad de ataque.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -174,7 +188,7 @@ public class BasicRangedWeapon : WeaponBase
             new UpgradeOption(
                 "ranged_weapon_range",
                 "[Arma] Cañón largo",
-                "Esta arma a distancia gana alcance.",
+                "Alcance.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -183,34 +197,63 @@ public class BasicRangedWeapon : WeaponBase
             new UpgradeOption(
                 "ranged_weapon_projectile_speed",
                 "[Arma] Disparo veloz",
-                "Los proyectiles de esta arma vuelan más rápido.",
+                "Velocidad de proyectil.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
             )
         };
     }
-    public override void ApplySpecificUpgrade(UpgradeOption option)
+
+    public override void BuildSpecificUpgradeOptionText(UpgradeOption option)
     {
+        string prefix = GetRarityPrefix(option.rarity);
+        int percent = GetSpecificPercent(option.rarity);
+
         switch (option.id)
         {
             case "ranged_weapon_damage":
-                weaponDamageMultiplier += GetWeaponDamageBonus(option.rarity);
+                option.title = prefix + " " + weaponName + ": semillas reforzadas";
+                option.description = "Daño directo +" + percent + "%.";
                 break;
 
             case "ranged_weapon_speed":
-                baseAttackCooldown = Mathf.Max(
-                    0.25f,
-                    baseAttackCooldown - GetWeaponCooldownReduction(option.rarity)
-                );
+                option.title = prefix + " " + weaponName + ": gatillo rápido";
+                option.description = "Velocidad de ataque +" + percent + "%.";
                 break;
 
             case "ranged_weapon_range":
-                attackRange += GetWeaponRangeBonus(option.rarity);
+                option.title = prefix + " " + weaponName + ": cañón largo";
+                option.description = "Alcance +" + percent + "%.";
                 break;
 
             case "ranged_weapon_projectile_speed":
-                weaponProjectileSpeedMultiplier += GetWeaponProjectileSpeedBonus(option.rarity);
+                option.title = prefix + " " + weaponName + ": disparo veloz";
+                option.description = "Velocidad de proyectil +" + percent + "%.";
+                break;
+        }
+    }
+
+    public override void ApplySpecificUpgrade(UpgradeOption option)
+    {
+        float bonus = GetSpecificBonus(option.rarity);
+
+        switch (option.id)
+        {
+            case "ranged_weapon_damage":
+                weaponDamageMultiplier += bonus;
+                break;
+
+            case "ranged_weapon_speed":
+                weaponAttackSpeedMultiplier += bonus;
+                break;
+
+            case "ranged_weapon_range":
+                weaponRangeMultiplier += bonus;
+                break;
+
+            case "ranged_weapon_projectile_speed":
+                weaponProjectileSpeedMultiplier += bonus;
                 break;
         }
 
@@ -219,55 +262,21 @@ public class BasicRangedWeapon : WeaponBase
         Debug.Log("Mejora aplicada a " + weaponName + ": " + option.title);
     }
 
-    float GetWeaponDamageBonus(UpgradeRarity rarity)
+    float GetSpecificBonus(UpgradeRarity rarity)
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 0.10f;
-            case UpgradeRarity.Rare: return 0.18f;
-            case UpgradeRarity.Epic: return 0.30f;
-            case UpgradeRarity.Legendary: return 0.45f;
+            case UpgradeRarity.Common: return commonBonus;
+            case UpgradeRarity.Rare: return rareBonus;
+            case UpgradeRarity.Epic: return epicBonus;
+            case UpgradeRarity.Legendary: return legendaryBonus;
         }
 
-        return 0.10f;
+        return commonBonus;
     }
 
-    float GetWeaponCooldownReduction(UpgradeRarity rarity)
+    int GetSpecificPercent(UpgradeRarity rarity)
     {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.05f;
-            case UpgradeRarity.Rare: return 0.08f;
-            case UpgradeRarity.Epic: return 0.13f;
-            case UpgradeRarity.Legendary: return 0.20f;
-        }
-
-        return 0.05f;
-    }
-
-    float GetWeaponRangeBonus(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.7f;
-            case UpgradeRarity.Rare: return 1.2f;
-            case UpgradeRarity.Epic: return 2f;
-            case UpgradeRarity.Legendary: return 3f;
-        }
-
-        return 0.7f;
-    }
-
-    float GetWeaponProjectileSpeedBonus(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.15f;
-            case UpgradeRarity.Rare: return 0.25f;
-            case UpgradeRarity.Epic: return 0.40f;
-            case UpgradeRarity.Legendary: return 0.65f;
-        }
-
-        return 0.15f;
+        return Mathf.RoundToInt(GetSpecificBonus(rarity) * 100f);
     }
 }

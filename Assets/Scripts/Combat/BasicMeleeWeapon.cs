@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 public class BasicMeleeWeapon : WeaponBase
 {
-    private float weaponDamageMultiplier = 1f;
     [Header("Daño del arma")]
     public int baseDamage = 3;
 
@@ -25,18 +24,26 @@ public class BasicMeleeWeapon : WeaponBase
     [Header("Detección")]
     public LayerMask enemyLayer;
 
-    private float attackTimer = 0f;
-    private PlayerMovement movement;
-    private Rigidbody2D rb;
-    private Vector2 lastAttackDirection = Vector2.right;
-
     [Header("Memoria de dirección")]
     public float directionChangeGraceTime = 0.12f;
 
+    [Header("Mejoras específicas")]
+    public float commonBonus = 0.10f;
+    public float rareBonus = 0.15f;
+    public float epicBonus = 0.20f;
+    public float legendaryBonus = 0.25f;
+
+    private float weaponDamageMultiplier = 1f;
+    private float weaponAttackSpeedMultiplier = 1f;
+    private float weaponRangeMultiplier = 0f;
+
+    private float attackTimer = 0f;
+    private PlayerMovement movement;
+    private Rigidbody2D rb;
+
+    private Vector2 lastAttackDirection = Vector2.right;
     private Vector2 candidateAttackDirection = Vector2.right;
     private float candidateDirectionTimer = 0f;
-
-    private float bonusRange = 0f;
 
     protected override void Awake()
     {
@@ -57,15 +64,21 @@ public class BasicMeleeWeapon : WeaponBase
         if (attackTimer <= 0f)
         {
             PerformAttack();
-
-            float cooldown = baseAttackCooldown / playerStats.attackSpeedMultiplier;
-            attackTimer = cooldown;
+            attackTimer = GetCurrentCooldown();
         }
+    }
+
+    float GetCurrentCooldown()
+    {
+        return baseAttackCooldown / (playerStats.attackSpeedMultiplier * weaponAttackSpeedMultiplier);
     }
 
     float GetFinalRange()
     {
-        return baseAttackRange + bonusRange + playerStats.meleeRange + playerStats.areaRangeBonus;
+        float baseRange = baseAttackRange + playerStats.meleeRange;
+        float rangeMultiplier = 1f + playerStats.areaRangeBonus + weaponRangeMultiplier;
+
+        return baseRange * rangeMultiplier;
     }
 
     void UpdateAttackPointPosition()
@@ -84,7 +97,6 @@ public class BasicMeleeWeapon : WeaponBase
 
         Vector2 currentDirection = rb.linearVelocity.normalized;
 
-        // Si la dirección actual es diagonal, la aceptamos al instante.
         if (IsDiagonalDirection(currentDirection))
         {
             lastAttackDirection = currentDirection;
@@ -94,8 +106,6 @@ public class BasicMeleeWeapon : WeaponBase
             return lastAttackDirection;
         }
 
-        // Si la última dirección buena era diagonal y ahora aparece una recta,
-        // esperamos un poco antes de machacar la diagonal.
         if (IsDiagonalDirection(lastAttackDirection))
         {
             if (Vector2.Dot(candidateAttackDirection, currentDirection) < 0.98f)
@@ -116,7 +126,6 @@ public class BasicMeleeWeapon : WeaponBase
             return lastAttackDirection;
         }
 
-        // Si no veníamos de una diagonal, actualizamos normal.
         lastAttackDirection = currentDirection;
         return lastAttackDirection;
     }
@@ -154,7 +163,7 @@ public class BasicMeleeWeapon : WeaponBase
 
         foreach (Collider2D hit in hits)
         {
-            EnemyHealth enemyHealth = hit.GetComponent<EnemyHealth>();
+            EnemyHealth enemyHealth = hit.GetComponentInParent<EnemyHealth>();
             if (enemyHealth == null) continue;
 
             int damageToApply = finalDamage;
@@ -169,7 +178,7 @@ public class BasicMeleeWeapon : WeaponBase
 
             enemyHealth.TakeDamage(damageToApply, isCrit);
 
-            EnemyKnockback enemyKnockback = hit.GetComponent<EnemyKnockback>();
+            EnemyKnockback enemyKnockback = hit.GetComponentInParent<EnemyKnockback>();
             if (enemyKnockback != null)
             {
                 Vector2 knockDir = ((Vector2)hit.transform.position - (Vector2)transform.position).normalized;
@@ -201,7 +210,7 @@ public class BasicMeleeWeapon : WeaponBase
             new UpgradeOption(
                 "melee_weapon_damage",
                 "[Arma] Espada afilada",
-                "Esta arma melee gana +10% de daño.",
+                "Daño directo.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -210,7 +219,7 @@ public class BasicMeleeWeapon : WeaponBase
             new UpgradeOption(
                 "melee_weapon_range",
                 "[Arma] Golpe amplio",
-                "Esta arma melee gana +0.2 de alcance.",
+                "Radio de golpe.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -219,7 +228,7 @@ public class BasicMeleeWeapon : WeaponBase
             new UpgradeOption(
                 "melee_weapon_speed",
                 "[Arma] Golpe rápido",
-                "Esta arma melee reduce su cooldown en 0.15 segundos.",
+                "Velocidad de ataque.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -227,23 +236,46 @@ public class BasicMeleeWeapon : WeaponBase
         };
     }
 
-    public override void ApplySpecificUpgrade(UpgradeOption option)
+    public override void BuildSpecificUpgradeOptionText(UpgradeOption option)
     {
+        string prefix = GetRarityPrefix(option.rarity);
+        int percent = GetSpecificPercent(option.rarity);
+
         switch (option.id)
         {
             case "melee_weapon_damage":
-                weaponDamageMultiplier += GetWeaponDamageBonus(option.rarity);
+                option.title = prefix + " " + weaponName + ": espada afilada";
+                option.description = "Daño directo +" + percent + "%.";
                 break;
 
             case "melee_weapon_range":
-                bonusRange += GetWeaponRangeBonus(option.rarity);
+                option.title = prefix + " " + weaponName + ": golpe amplio";
+                option.description = "Radio de golpe +" + percent + "%.";
                 break;
 
             case "melee_weapon_speed":
-                baseAttackCooldown = Mathf.Max(
-                    0.4f,
-                    baseAttackCooldown - GetWeaponCooldownReduction(option.rarity)
-                );
+                option.title = prefix + " " + weaponName + ": golpe rápido";
+                option.description = "Velocidad de ataque +" + percent + "%.";
+                break;
+        }
+    }
+
+    public override void ApplySpecificUpgrade(UpgradeOption option)
+    {
+        float bonus = GetSpecificBonus(option.rarity);
+
+        switch (option.id)
+        {
+            case "melee_weapon_damage":
+                weaponDamageMultiplier += bonus;
+                break;
+
+            case "melee_weapon_range":
+                weaponRangeMultiplier += bonus;
+                break;
+
+            case "melee_weapon_speed":
+                weaponAttackSpeedMultiplier += bonus;
                 break;
         }
 
@@ -252,61 +284,37 @@ public class BasicMeleeWeapon : WeaponBase
         Debug.Log("Mejora aplicada a " + weaponName + ": " + option.title);
     }
 
-    float GetWeaponDamageBonus(UpgradeRarity rarity)
+    float GetSpecificBonus(UpgradeRarity rarity)
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 0.10f;
-            case UpgradeRarity.Rare: return 0.18f;
-            case UpgradeRarity.Epic: return 0.30f;
-            case UpgradeRarity.Legendary: return 0.45f;
+            case UpgradeRarity.Common: return commonBonus;
+            case UpgradeRarity.Rare: return rareBonus;
+            case UpgradeRarity.Epic: return epicBonus;
+            case UpgradeRarity.Legendary: return legendaryBonus;
         }
 
-        return 0.10f;
+        return commonBonus;
     }
 
-    float GetWeaponRangeBonus(UpgradeRarity rarity)
+    int GetSpecificPercent(UpgradeRarity rarity)
     {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.15f;
-            case UpgradeRarity.Rare: return 0.25f;
-            case UpgradeRarity.Epic: return 0.40f;
-            case UpgradeRarity.Legendary: return 0.65f;
-        }
-
-        return 0.15f;
-    }
-
-    float GetWeaponCooldownReduction(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.10f;
-            case UpgradeRarity.Rare: return 0.16f;
-            case UpgradeRarity.Epic: return 0.25f;
-            case UpgradeRarity.Legendary: return 0.40f;
-        }
-
-        return 0.10f;
+        return Mathf.RoundToInt(GetSpecificBonus(rarity) * 100f);
     }
 
     void OnDrawGizmosSelected()
     {
         if (attackPoint == null) return;
 
-        // Dirección por defecto (derecha) SOLO para visualizar
         Vector2 dir = Vector2.right;
-
-        // Calculamos donde estaría el attackPoint
         Vector3 previewPosition = transform.position + (Vector3)(dir * attackPointDistance);
 
-        float radius = baseAttackRange + bonusRange;
+        float radius = baseAttackRange;
 
         PlayerStats ps = GetComponent<PlayerStats>();
         if (ps != null)
         {
-            radius += ps.meleeRange + ps.areaRangeBonus;
+            radius = (baseAttackRange + ps.meleeRange) * (1f + ps.areaRangeBonus);
         }
 
         Gizmos.color = Color.red;

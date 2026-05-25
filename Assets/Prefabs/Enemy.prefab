@@ -143,12 +143,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa2ae04bf4e093e40a942d5c4eecee2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
+  destroyAutomaticallyOnDeath: 1
   maxHealth: 400
   currentHealth: 0
   scaleHealthWithDifficulty: 0
   healthScalingStrength: 0.15
-  xpOrbPrefab: {fileID: 7341363948313262901, guid: a15711f9b8be3fd4ab45a8c77bdfeb73, type: 3}
-  xpOrbCount: 1
+  xpValue: 100
+  blueXpOrbPrefab: {fileID: 7341363948313262901, guid: a15711f9b8be3fd4ab45a8c77bdfeb73, type: 3}
+  blueXpOrbValue: 100
+  purpleXpOrbPrefab: {fileID: 7341363948313262901, guid: 1253a84476f9eb8408319832cea0b605, type: 3}
+  purpleXpOrbValue: 200
+  xpDropSpread: 0.5
   coinPrefab: {fileID: 889489848073716753, guid: 6750fc732abb4df4f9df36afd9a689a2, type: 3}
   coinDropChance: 0.1
   coinDropCount: 1

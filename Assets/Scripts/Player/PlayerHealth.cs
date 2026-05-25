@@ -12,6 +12,10 @@ public class PlayerHealth : MonoBehaviour
     private PlayerStats stats;
     private DamageFlash damageFlash;
 
+    [Header("Reducción de daño")]
+    [Range(0f, 0.90f)]
+    public float damageReduction = 0f;
+
     [Header("Game Over")]
     public float gameOverPauseDelay = 1f;
 
@@ -79,13 +83,16 @@ public class PlayerHealth : MonoBehaviour
             if (Random.value < stats.dodgeChance)
             {
                 ShowDodgePopup();
-
                 Debug.Log("¡Esquiva!");
-
                 StartCoroutine(DamageCooldown());
                 return;
             }
+        }
 
+        damage = ApplyDamageReduction(damage);
+
+        if (stats != null)
+        {
             damage = Mathf.Max(1, damage - stats.armor);
         }
 
@@ -95,6 +102,7 @@ public class PlayerHealth : MonoBehaviour
         {
             currentHealth = 0;
         }
+
         ShowDamageTakenPopup(damage);
 
         if (damageFlash != null)
@@ -111,6 +119,21 @@ public class PlayerHealth : MonoBehaviour
         }
 
         StartCoroutine(DamageCooldown());
+    }
+
+    int ApplyDamageReduction(int damage)
+    {
+        damage = Mathf.Max(0, damage);
+
+        if (damageReduction <= 0f)
+        {
+            return damage;
+        }
+
+        float clampedReduction = Mathf.Clamp(damageReduction, 0f, 0.90f);
+        int reducedDamage = Mathf.RoundToInt(damage * (1f - clampedReduction));
+
+        return Mathf.Max(1, reducedDamage);
     }
 
     void ShowDodgePopup()

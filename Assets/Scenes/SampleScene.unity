@@ -329,6 +329,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   currentHealth: 0
   damageCooldown: 0.1
+  damageReduction: 0
   gameOverPauseDelay: 1
   dodgePopupPrefab: {fileID: 3726461286995920600, guid: c5ddf32853a7e4145a617f2c4a80899e, type: 3}
   dodgePopupOffset: {x: 0, y: 1, z: 0}
@@ -348,8 +349,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAutoAttack
   weaponId: ranged
   weaponName: Pistola
-  weaponTags: 0100000002000000
   isActiveWeapon: 0
+  weaponTags: 0100000002000000
   weaponLevel: 0
   maxLevel: 15
   bulletPrefab: {fileID: 1517515509723682256, guid: 6f871fb3fa7f43d48ac7b7eed393ae89, type: 3}
@@ -358,6 +359,10 @@ MonoBehaviour:
   projectileSpawnDistance: 0.6
   baseDamage: 55
   spreadAngle: 8
+  commonBonus: 0.1
+  rareBonus: 0.15
+  epicBonus: 0.2
+  legendaryBonus: 0.25
 --- !u!114 &164040102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -437,8 +442,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BasicMeleeWeapon
   weaponId: melee
   weaponName: Espada
-  weaponTags: 0000000003000000
   isActiveWeapon: 0
+  weaponTags: 0000000003000000
   weaponLevel: 0
   maxLevel: 15
   baseDamage: 300
@@ -453,6 +458,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   directionChangeGraceTime: 0.02
+  commonBonus: 0.1
+  rareBonus: 0.15
+  epicBonus: 0.2
+  legendaryBonus: 0.25
 --- !u!114 &164040106
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -530,8 +539,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoomerangWeapon
   weaponId: boomerang
   weaponName: Boomerang de chatarra
-  weaponTags: 0100000005000000
   isActiveWeapon: 0
+  weaponTags: 0100000005000000
   weaponLevel: 0
   maxLevel: 15
   knockbackForce: 2.5
@@ -555,6 +564,10 @@ MonoBehaviour:
   allowOnlyOneBoomerang: 1
   useProjectileCountBonus: 0
   directionChangeGraceTime: 0.02
+  commonBonus: 0.1
+  rareBonus: 0.15
+  epicBonus: 0.2
+  legendaryBonus: 0.25
 --- !u!114 &164040111
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -569,8 +582,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ToxicAuraWeapon
   weaponId: toxic_aura
   weaponName: "Fuga t\xF3xica"
-  weaponTags: 0400000003000000
   isActiveWeapon: 0
+  weaponTags: 0400000003000000
   weaponLevel: 0
   maxLevel: 15
   perEnemyPoisonApplyCooldown: 1
@@ -589,6 +602,10 @@ MonoBehaviour:
   contactDamagePerPulse: 0
   auraVisual: {fileID: 988619306}
   showAuraOnlyWhenActive: 1
+  commonBonus: 0.1
+  rareBonus: 0.15
+  epicBonus: 0.2
+  legendaryBonus: 0.25
 --- !u!1 &245605217
 GameObject:
   m_ObjectHideFlags: 0
@@ -1192,7 +1209,7 @@ MonoBehaviour:
   showPhaseAnnouncements: 1
   showInitialDayAnnouncement: 0
   currentPhase: 0
-  dayDuration: 125
+  dayDuration: 120
   nightDuration: 45
   logPhaseChanges: 1
 --- !u!4 &502637568
@@ -1613,8 +1630,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelUpManager
   levelUpAnnouncementDelay: 1.2
-  baseRerollCost: 5
-  rerollCostIncrease: 3
+  baseRerollCost: 10
+  rerollCostIncrease: 5
   guaranteeWeaponUpgradeOption: 1
   legendarySpecialChance: 0.75
   projectileCountMinLevelsBetweenOffers: 6
@@ -2607,8 +2624,8 @@ MonoBehaviour:
   repairWoodCost: 5
   repairStoneCost: 5
   repairAmount: 20
-  baseRerollCost: 5
-  rerollCostIncrease: 3
+  baseRerollCost: 10
+  rerollCostIncrease: 5
   basePulseRadius: 5
   basePulseInterval: 3
 --- !u!4 &1398742872

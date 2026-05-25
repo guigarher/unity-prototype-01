@@ -6,6 +6,7 @@ public class BoomerangWeapon : WeaponBase
     [Header("Knockback")]
     public float knockbackForce = 4f;
     public float knockbackDuration = 0.12f;
+
     [Header("Prefab")]
     public GameObject boomerangProjectilePrefab;
 
@@ -15,8 +16,6 @@ public class BoomerangWeapon : WeaponBase
 
     [Header("Daño")]
     public int baseDamage = 2;
-    private float weaponDamageMultiplier = 1f;
-    private Rigidbody2D rb;
 
     [Header("Trayectoria")]
     public float flightDuration = 1.15f;
@@ -38,12 +37,24 @@ public class BoomerangWeapon : WeaponBase
     public bool allowOnlyOneBoomerang = true;
     public bool useProjectileCountBonus = false;
 
-    private float attackTimer = 0f;
-    private int activeBoomerangs = 0;
-    private PlayerMovement movement;
-
     [Header("Memoria de dirección")]
     public float directionChangeGraceTime = 0.02f;
+
+    [Header("Mejoras específicas")]
+    public float commonBonus = 0.10f;
+    public float rareBonus = 0.15f;
+    public float epicBonus = 0.20f;
+    public float legendaryBonus = 0.25f;
+
+    private float weaponDamageMultiplier = 1f;
+    private float weaponAttackSpeedMultiplier = 1f;
+    private float weaponSizeMultiplier = 0f;
+    private float weaponBleedDamageMultiplier = 1f;
+
+    private float attackTimer = 0f;
+    private int activeBoomerangs = 0;
+
+    private Rigidbody2D rb;
 
     private Vector2 lastThrowDirection = Vector2.right;
     private Vector2 candidateThrowDirection = Vector2.right;
@@ -52,11 +63,10 @@ public class BoomerangWeapon : WeaponBase
     protected override void Awake()
     {
         base.Awake();
-        movement = GetComponent<PlayerMovement>();
         rb = GetComponent<Rigidbody2D>();
     }
 
-   void Update()
+    void Update()
     {
         if (!isActiveWeapon) return;
         if (playerStats == null || boomerangProjectilePrefab == null) return;
@@ -102,7 +112,12 @@ public class BoomerangWeapon : WeaponBase
             return baseAttackCooldown;
         }
 
-        return baseAttackCooldown / playerStats.attackSpeedMultiplier;
+        return baseAttackCooldown / (playerStats.attackSpeedMultiplier * weaponAttackSpeedMultiplier);
+    }
+
+    float GetFinalHitRadius()
+    {
+        return hitRadius * (1f + weaponSizeMultiplier);
     }
 
     bool TryThrowBoomerang()
@@ -151,6 +166,7 @@ public class BoomerangWeapon : WeaponBase
 
         int finalBleedDamagePerTick = Mathf.RoundToInt(
             bleedDamagePerTick *
+            weaponBleedDamageMultiplier *
             playerStats.damageMultiplier *
             playerStats.bleedDamageMultiplier
         );
@@ -169,7 +185,7 @@ public class BoomerangWeapon : WeaponBase
             forwardDistance,
             sideDistance,
             behindDistance,
-            hitRadius,
+            GetFinalHitRadius(),
             enemyLayer,
             finalBleedDamagePerTick,
             bleedDuration,
@@ -265,16 +281,16 @@ public class BoomerangWeapon : WeaponBase
             new UpgradeOption(
                 "boomerang_damage",
                 "[Arma] Filo dentado",
-                "El boomerang gana daño.",
+                "Daño directo.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
             ),
 
             new UpgradeOption(
-                "boomerang_cooldown",
+                "boomerang_speed",
                 "[Arma] Lanzamiento rápido",
-                "El boomerang tarda menos en volver a lanzarse.",
+                "Velocidad de ataque.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -283,7 +299,7 @@ public class BoomerangWeapon : WeaponBase
             new UpgradeOption(
                 "boomerang_size",
                 "[Arma] Hoja más grande",
-                "El boomerang golpea en un área mayor.",
+                "Radio de impacto.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -292,7 +308,7 @@ public class BoomerangWeapon : WeaponBase
             new UpgradeOption(
                 "boomerang_bleed",
                 "[Arma] Corte profundo",
-                "El sangrado del boomerang mejora.",
+                "Daño de sangrado.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -300,32 +316,55 @@ public class BoomerangWeapon : WeaponBase
         };
     }
 
-    public override void ApplySpecificUpgrade(UpgradeOption option)
+    public override void BuildSpecificUpgradeOptionText(UpgradeOption option)
     {
+        string prefix = GetRarityPrefix(option.rarity);
+        int percent = GetSpecificPercent(option.rarity);
+
         switch (option.id)
         {
             case "boomerang_damage":
-                weaponDamageMultiplier += GetDamageBonus(option.rarity);
+                option.title = prefix + " " + weaponName + ": filo dentado";
+                option.description = "Daño directo +" + percent + "%.";
                 break;
 
-            case "boomerang_cooldown":
-                baseAttackCooldown = Mathf.Max(
-                    0.65f,
-                    baseAttackCooldown - GetCooldownReduction(option.rarity)
-                );
+            case "boomerang_speed":
+                option.title = prefix + " " + weaponName + ": lanzamiento rápido";
+                option.description = "Velocidad de ataque +" + percent + "%.";
                 break;
 
             case "boomerang_size":
-                float sizeBonus = GetSizeBonus(option.rarity);
-
-                hitRadius += sizeBonus;
-                sideDistance += sizeBonus * 1.5f;
+                option.title = prefix + " " + weaponName + ": hoja más grande";
+                option.description = "Radio de impacto +" + percent + "%.";
                 break;
 
             case "boomerang_bleed":
-                bleedDamagePerTick += GetBleedDamageBonus(option.rarity);
-                bleedDuration += GetBleedDurationBonus(option.rarity);
-                bleedChance = Mathf.Min(1f, bleedChance + GetBleedChanceBonus(option.rarity));
+                option.title = prefix + " " + weaponName + ": corte profundo";
+                option.description = "Sangrado +" + percent + "% de daño.";
+                break;
+        }
+    }
+
+    public override void ApplySpecificUpgrade(UpgradeOption option)
+    {
+        float bonus = GetSpecificBonus(option.rarity);
+
+        switch (option.id)
+        {
+            case "boomerang_damage":
+                weaponDamageMultiplier += bonus;
+                break;
+
+            case "boomerang_speed":
+                weaponAttackSpeedMultiplier += bonus;
+                break;
+
+            case "boomerang_size":
+                weaponSizeMultiplier += bonus;
+                break;
+
+            case "boomerang_bleed":
+                weaponBleedDamageMultiplier += bonus;
                 break;
         }
 
@@ -334,81 +373,21 @@ public class BoomerangWeapon : WeaponBase
         Debug.Log("Mejora aplicada a " + weaponName + ": " + option.title);
     }
 
-    float GetDamageBonus(UpgradeRarity rarity)
+    float GetSpecificBonus(UpgradeRarity rarity)
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 0.12f;
-            case UpgradeRarity.Rare: return 0.20f;
-            case UpgradeRarity.Epic: return 0.35f;
-            case UpgradeRarity.Legendary: return 0.55f;
+            case UpgradeRarity.Common: return commonBonus;
+            case UpgradeRarity.Rare: return rareBonus;
+            case UpgradeRarity.Epic: return epicBonus;
+            case UpgradeRarity.Legendary: return legendaryBonus;
         }
 
-        return 0.12f;
+        return commonBonus;
     }
 
-    float GetCooldownReduction(UpgradeRarity rarity)
+    int GetSpecificPercent(UpgradeRarity rarity)
     {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.12f;
-            case UpgradeRarity.Rare: return 0.20f;
-            case UpgradeRarity.Epic: return 0.32f;
-            case UpgradeRarity.Legendary: return 0.50f;
-        }
-
-        return 0.12f;
-    }
-
-    float GetSizeBonus(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.08f;
-            case UpgradeRarity.Rare: return 0.14f;
-            case UpgradeRarity.Epic: return 0.22f;
-            case UpgradeRarity.Legendary: return 0.35f;
-        }
-
-        return 0.08f;
-    }
-
-    int GetBleedDamageBonus(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 1;
-            case UpgradeRarity.Rare: return 1;
-            case UpgradeRarity.Epic: return 2;
-            case UpgradeRarity.Legendary: return 3;
-        }
-
-        return 1;
-    }
-
-    float GetBleedDurationBonus(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.5f;
-            case UpgradeRarity.Rare: return 1f;
-            case UpgradeRarity.Epic: return 1.5f;
-            case UpgradeRarity.Legendary: return 2.5f;
-        }
-
-        return 0.5f;
-    }
-
-    float GetBleedChanceBonus(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.05f;
-            case UpgradeRarity.Rare: return 0.10f;
-            case UpgradeRarity.Epic: return 0.15f;
-            case UpgradeRarity.Legendary: return 0.25f;
-        }
-
-        return 0.05f;
+        return Mathf.RoundToInt(GetSpecificBonus(rarity) * 100f);
     }
 }

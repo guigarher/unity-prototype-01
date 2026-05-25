@@ -323,8 +323,9 @@ public class EnemyExploder : MonoBehaviour
     void OnEnemyDeath()
     {
         if (hasExploded) return;
+        if (isChargingExplosion) return;
 
-        Explode();
+        StartCoroutine(ExplosionChargeRoutine());
     }
 
     void Explode()

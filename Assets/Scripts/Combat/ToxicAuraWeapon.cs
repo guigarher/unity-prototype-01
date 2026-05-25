@@ -6,7 +6,6 @@ public class ToxicAuraWeapon : WeaponBase
     [Header("Control anti-abuso")]
     public float perEnemyPoisonApplyCooldown = 1f;
 
-    private Dictionary<EnemyHealth, float> poisonCooldowns = new Dictionary<EnemyHealth, float>();
     [Header("Aura")]
     public float auraRadius = 2.4f;
     public float applyInterval = 0.5f;
@@ -30,8 +29,20 @@ public class ToxicAuraWeapon : WeaponBase
     public Transform auraVisual;
     public bool showAuraOnlyWhenActive = true;
 
+    [Header("Mejoras específicas")]
+    public float commonBonus = 0.10f;
+    public float rareBonus = 0.15f;
+    public float epicBonus = 0.20f;
+    public float legendaryBonus = 0.25f;
+
+    private Dictionary<EnemyHealth, float> poisonCooldowns = new Dictionary<EnemyHealth, float>();
+
     private float applyTimer = 0f;
-    private float weaponPoisonMultiplier = 1f;
+
+    private float weaponPoisonDamageMultiplier = 1f;
+    private float weaponAuraRadiusMultiplier = 0f;
+    private float weaponPoisonSpeedMultiplier = 0f;
+    private float weaponPoisonDurationMultiplier = 0f;
 
     protected override void Awake()
     {
@@ -75,12 +86,7 @@ public class ToxicAuraWeapon : WeaponBase
 
         foreach (Collider2D hit in hits)
         {
-            EnemyHealth enemyHealth = hit.GetComponent<EnemyHealth>();
-
-            if (enemyHealth == null)
-            {
-                enemyHealth = hit.GetComponentInParent<EnemyHealth>();
-            }
+            EnemyHealth enemyHealth = hit.GetComponentInParent<EnemyHealth>();
 
             if (enemyHealth == null) continue;
 
@@ -98,10 +104,30 @@ public class ToxicAuraWeapon : WeaponBase
             globalAreaBonus = playerStats.areaRangeBonus * globalAreaBonusMultiplier;
         }
 
-        float finalRadius = auraRadius + globalAreaBonus;
+        float finalRadius = auraRadius * (1f + weaponAuraRadiusMultiplier + globalAreaBonus);
 
         return Mathf.Min(finalRadius, maxFinalAuraRadius);
     }
+
+    float GetCurrentApplyInterval()
+    {
+        float speedMultiplier = 1f + weaponPoisonSpeedMultiplier;
+
+        return Mathf.Max(0.15f, applyInterval / speedMultiplier);
+    }
+
+    float GetCurrentPoisonCooldown()
+    {
+        float speedMultiplier = 1f + weaponPoisonSpeedMultiplier;
+
+        return Mathf.Max(0.15f, perEnemyPoisonApplyCooldown / speedMultiplier);
+    }
+
+    float GetFinalPoisonDuration()
+    {
+        return poisonDuration * (1f + weaponPoisonDurationMultiplier);
+    }
+
     void ApplyContactDamage(EnemyHealth enemyHealth)
     {
         if (contactDamagePerPulse <= 0) return;
@@ -132,7 +158,7 @@ public class ToxicAuraWeapon : WeaponBase
 
         int finalPoisonDamagePerTick = Mathf.RoundToInt(
             poisonDamagePerTick *
-            weaponPoisonMultiplier *
+            weaponPoisonDamageMultiplier *
             playerStats.damageMultiplier *
             playerStats.poisonDamageMultiplier
         );
@@ -148,12 +174,12 @@ public class ToxicAuraWeapon : WeaponBase
 
         statusEffects.ApplyPoison(
             finalPoisonDamagePerTick,
-            poisonDuration,
+            GetFinalPoisonDuration(),
             poisonTickInterval,
             maxPoisonStacks
         );
 
-        poisonCooldowns[enemyHealth] = perEnemyPoisonApplyCooldown;
+        poisonCooldowns[enemyHealth] = GetCurrentPoisonCooldown();
     }
 
     void UpdatePoisonCooldowns()
@@ -177,11 +203,6 @@ public class ToxicAuraWeapon : WeaponBase
                 poisonCooldowns.Remove(enemyHealth);
             }
         }
-    }
-
-    float GetCurrentApplyInterval()
-    {
-        return Mathf.Max(0.15f, applyInterval);
     }
 
     void UpdateAuraVisual()
@@ -219,7 +240,7 @@ public class ToxicAuraWeapon : WeaponBase
             new UpgradeOption(
                 "toxic_aura_damage",
                 "[Arma] Humo corrosivo",
-                "El veneno del aura hace más daño.",
+                "Daño de veneno.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -228,7 +249,7 @@ public class ToxicAuraWeapon : WeaponBase
             new UpgradeOption(
                 "toxic_aura_radius",
                 "[Arma] Nube expansiva",
-                "El aura tóxica aumenta su radio.",
+                "Radio.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -237,16 +258,7 @@ public class ToxicAuraWeapon : WeaponBase
             new UpgradeOption(
                 "toxic_aura_frequency",
                 "[Arma] Fuga constante",
-                "El aura aplica veneno más a menudo.",
-                UpgradeRarity.Common,
-                true,
-                weaponId
-            ),
-
-            new UpgradeOption(
-                "toxic_aura_stacks",
-                "[Arma] Veneno acumulativo",
-                "El veneno puede acumular más cargas.",
+                "Velocidad de veneno.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -255,7 +267,7 @@ public class ToxicAuraWeapon : WeaponBase
             new UpgradeOption(
                 "toxic_aura_duration",
                 "[Arma] Toxina persistente",
-                "El veneno dura más tiempo.",
+                "Duración del veneno.",
                 UpgradeRarity.Common,
                 true,
                 weaponId
@@ -263,31 +275,55 @@ public class ToxicAuraWeapon : WeaponBase
         };
     }
 
-    public override void ApplySpecificUpgrade(UpgradeOption option)
+    public override void BuildSpecificUpgradeOptionText(UpgradeOption option)
     {
+        string prefix = GetRarityPrefix(option.rarity);
+        int percent = GetSpecificPercent(option.rarity);
+
         switch (option.id)
         {
             case "toxic_aura_damage":
-                weaponPoisonMultiplier += GetPoisonDamageBonus(option.rarity);
+                option.title = prefix + " " + weaponName + ": humo corrosivo";
+                option.description = "Veneno +" + percent + "% de daño.";
                 break;
 
             case "toxic_aura_radius":
-                auraRadius += GetRadiusBonus(option.rarity);
+                option.title = prefix + " " + weaponName + ": nube expansiva";
+                option.description = "Radio +" + percent + "%.";
                 break;
 
             case "toxic_aura_frequency":
-                applyInterval = Mathf.Max(
-                    0.20f,
-                    applyInterval - GetIntervalReduction(option.rarity)
-                );
-                break;
-
-            case "toxic_aura_stacks":
-                maxPoisonStacks += GetStackBonus(option.rarity);
+                option.title = prefix + " " + weaponName + ": fuga constante";
+                option.description = "Veneno +" + percent + "% más rápido.";
                 break;
 
             case "toxic_aura_duration":
-                poisonDuration += GetDurationBonus(option.rarity);
+                option.title = prefix + " " + weaponName + ": toxina persistente";
+                option.description = "Duración del veneno +" + percent + "%.";
+                break;
+        }
+    }
+
+    public override void ApplySpecificUpgrade(UpgradeOption option)
+    {
+        float bonus = GetSpecificBonus(option.rarity);
+
+        switch (option.id)
+        {
+            case "toxic_aura_damage":
+                weaponPoisonDamageMultiplier += bonus;
+                break;
+
+            case "toxic_aura_radius":
+                weaponAuraRadiusMultiplier += bonus;
+                break;
+
+            case "toxic_aura_frequency":
+                weaponPoisonSpeedMultiplier += bonus;
+                break;
+
+            case "toxic_aura_duration":
+                weaponPoisonDurationMultiplier += bonus;
                 break;
         }
 
@@ -296,69 +332,22 @@ public class ToxicAuraWeapon : WeaponBase
         Debug.Log("Mejora aplicada a " + weaponName + ": " + option.title);
     }
 
-    float GetPoisonDamageBonus(UpgradeRarity rarity)
+    float GetSpecificBonus(UpgradeRarity rarity)
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 0.15f;
-            case UpgradeRarity.Rare: return 0.25f;
-            case UpgradeRarity.Epic: return 0.40f;
-            case UpgradeRarity.Legendary: return 0.65f;
+            case UpgradeRarity.Common: return commonBonus;
+            case UpgradeRarity.Rare: return rareBonus;
+            case UpgradeRarity.Epic: return epicBonus;
+            case UpgradeRarity.Legendary: return legendaryBonus;
         }
 
-        return 0.15f;
+        return commonBonus;
     }
 
-    float GetRadiusBonus(UpgradeRarity rarity)
+    int GetSpecificPercent(UpgradeRarity rarity)
     {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.25f;
-            case UpgradeRarity.Rare: return 0.40f;
-            case UpgradeRarity.Epic: return 0.65f;
-            case UpgradeRarity.Legendary: return 1.0f;
-        }
-
-        return 0.25f;
-    }
-
-    float GetIntervalReduction(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.04f;
-            case UpgradeRarity.Rare: return 0.07f;
-            case UpgradeRarity.Epic: return 0.11f;
-            case UpgradeRarity.Legendary: return 0.16f;
-        }
-
-        return 0.04f;
-    }
-
-    int GetStackBonus(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 1;
-            case UpgradeRarity.Rare: return 1;
-            case UpgradeRarity.Epic: return 2;
-            case UpgradeRarity.Legendary: return 3;
-        }
-
-        return 1;
-    }
-
-    float GetDurationBonus(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.5f;
-            case UpgradeRarity.Rare: return 1.0f;
-            case UpgradeRarity.Epic: return 1.5f;
-            case UpgradeRarity.Legendary: return 2.5f;
-        }
-
-        return 0.5f;
+        return Mathf.RoundToInt(GetSpecificBonus(rarity) * 100f);
     }
 
     void OnDrawGizmosSelected()
@@ -370,7 +359,7 @@ public class ToxicAuraWeapon : WeaponBase
         PlayerStats ps = GetComponent<PlayerStats>();
         if (ps != null)
         {
-            radius += ps.areaRangeBonus * globalAreaBonusMultiplier;
+            radius *= 1f + (ps.areaRangeBonus * globalAreaBonusMultiplier);
         }
 
         radius = Mathf.Min(radius, maxFinalAuraRadius);

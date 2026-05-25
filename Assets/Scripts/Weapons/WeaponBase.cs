@@ -17,15 +17,10 @@ public abstract class WeaponBase : MonoBehaviour
     [Header("Info arma")]
     public string weaponId;
     public string weaponName;
+    public bool isActiveWeapon = false;
 
     [Header("Etiquetas")]
     public List<WeaponTag> weaponTags = new List<WeaponTag>();
-
-    public bool HasTag(WeaponTag tag)
-    {
-        return weaponTags.Contains(tag);
-    }
-    public bool isActiveWeapon = false;
 
     [Header("Progresión")]
     public int weaponLevel = 0;
@@ -36,6 +31,11 @@ public abstract class WeaponBase : MonoBehaviour
     protected virtual void Awake()
     {
         playerStats = GetComponentInParent<PlayerStats>();
+    }
+
+    public bool HasTag(WeaponTag tag)
+    {
+        return weaponTags.Contains(tag);
     }
 
     public virtual void ActivateWeapon()
@@ -82,5 +82,42 @@ public abstract class WeaponBase : MonoBehaviour
 
     public virtual void ApplySpecificUpgrade(UpgradeOption option)
     {
+    }
+
+    public virtual void BuildSpecificUpgradeOptionText(UpgradeOption option)
+    {
+    }
+
+    protected string GetRarityPrefix(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return "[Común]";
+            case UpgradeRarity.Rare: return "[Rara]";
+            case UpgradeRarity.Epic: return "[Épica]";
+            case UpgradeRarity.Legendary: return "[Legendaria]";
+        }
+
+        return "";
+    }
+
+    protected string FormatPercent(float value)
+    {
+        return "+" + Mathf.RoundToInt(value * 100f) + "%";
+    }
+
+    protected string FormatFlat(float value)
+    {
+        return "+" + value.ToString("0.##");
+    }
+
+    protected string FormatSeconds(float value)
+    {
+        return value.ToString("0.##") + " s";
+    }
+
+    protected string AffectsOnlyThisWeaponText()
+    {
+        return "\nAfecta solo a: " + weaponName + ".";
     }
 }

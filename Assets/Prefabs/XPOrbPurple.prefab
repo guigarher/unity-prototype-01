@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3323335997447901470}
   - component: {fileID: 1983555239430158981}
   m_Layer: 0
-  m_Name: XPOrb
+  m_Name: XPOrbPurple
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,9 +46,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b2f462e910234148ba53b9df6a7e3a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::XPOrb
-  xpValue: 100
+  applyXPMultiplier: 1
+  xpValue: 200
   moveSpeed: 8
+  maxMoveSpeed: 14
+  acceleration: 18
   pickupDelay: 0.5
+  visualRoot: {fileID: 0}
+  spriteRenderer: {fileID: 0}
+  orbColor: {r: 1, g: 0, b: 0.84357405, a: 1}
+  baseVisualScale: 1.2
+  pulse: 1
+  pulseAmount: 0.1
+  pulseSpeed: 7
+  rotateSpeed: 120
+  floatAmplitude: 0.07
+  floatFrequency: 5
+  collectVfxPrefab: {fileID: 0}
 --- !u!212 &3323335997447901470
 SpriteRenderer:
   serializedVersion: 2
@@ -98,8 +112,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 15
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.2655465, g: 0.8207547, b: 0.20518868, a: 1}
+  m_Sprite: {fileID: -2413806693520163455, guid: 16d45d1b047b081458636b876a6ab22d, type: 3}
+  m_Color: {r: 1, g: 0, b: 0.8431373, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

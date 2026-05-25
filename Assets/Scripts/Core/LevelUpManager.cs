@@ -14,8 +14,8 @@ public class LevelUpManager : MonoBehaviour
     private bool openingRewardMenu = false;
 
     [Header("Reroll con oro")]
-    public int baseRerollCost = 5;
-    public int rerollCostIncrease = 3;
+    public int baseRerollCost = 10;
+    public int rerollCostIncrease = 5;
     private int currentRerollCost;
 
     [Header("Control de opciones")]
@@ -139,6 +139,11 @@ public class LevelUpManager : MonoBehaviour
         return level == 5 || level == 10 || level == 15;
     }
 
+    public bool IsRewardMenuBusy()
+    {
+        return openingRewardMenu || waitingForChoice;
+    }
+
     public void OpenLevelUpMenu()
     {
         InitializeReferences();
@@ -183,30 +188,28 @@ public class LevelUpManager : MonoBehaviour
 
         List<string> normalGeneralPool = CreateUpgradePool();
         List<string> legendaryOnlyPool = CreateLegendaryOnlyUpgradePool();
-
         List<UpgradeOption> weaponOptions = CreateWeaponUpgradeOptions();
 
-        // 1 opción de arma garantizada, si hay mejoras de arma disponibles.
-        if (guaranteeWeaponUpgradeOption && weaponOptions.Count > 0)
-        {
-            AddRandomOptionFromPool(weaponOptions, currentOptions);
-        }
+        List<UpgradeOption> allOptions = new List<UpgradeOption>();
 
-        // El resto son mejoras generales.
-        while (currentOptions.Count < OPTION_COUNT && normalGeneralPool.Count > 0)
+        while (normalGeneralPool.Count > 0)
         {
             UpgradeOption option = CreateRolledGeneralUpgrade(normalGeneralPool, legendaryOnlyPool);
 
             if (option != null)
             {
-                currentOptions.Add(option);
+                allOptions.Add(option);
             }
         }
 
-        // Si por cualquier motivo faltan opciones, rellenamos con mejoras de arma.
-        while (currentOptions.Count < OPTION_COUNT && weaponOptions.Count > 0)
+        while (weaponOptions.Count > 0)
         {
-            AddRandomOptionFromPool(weaponOptions, currentOptions);
+            AddRandomOptionFromPool(weaponOptions, allOptions);
+        }
+
+        while (currentOptions.Count < OPTION_COUNT && allOptions.Count > 0)
+        {
+            AddRandomOptionFromPool(allOptions, currentOptions);
         }
     }
 
@@ -227,43 +230,13 @@ public class LevelUpManager : MonoBehaviour
                 UpgradeRarity rarity = RollRarity();
 
                 option.rarity = rarity;
-                option.title = GetRarityPrefix(rarity) + " " + option.title;
-                option.description = GetWeaponUpgradeDescription(option.id, rarity, option.description);
+                weapon.BuildSpecificUpgradeOptionText(option);
 
                 weaponOptions.Add(option);
             }
         }
 
         return weaponOptions;
-    }
-
-    string GetWeaponUpgradeDescription(string id, UpgradeRarity rarity, string fallbackDescription)
-    {
-        switch (id)
-        {
-            case "melee_weapon_damage":
-                return "Esta arma melee gana +" + Mathf.RoundToInt(GetWeaponDamageValue(rarity) * 100f) + "% de daño.";
-
-            case "melee_weapon_range":
-                return "Esta arma melee gana +" + GetWeaponRangeValue(rarity).ToString("0.##") + " de alcance.";
-
-            case "melee_weapon_speed":
-                return "Esta arma melee reduce su cooldown en " + GetWeaponCooldownReductionValue(rarity).ToString("0.##") + " segundos.";
-
-            case "ranged_weapon_damage":
-                return "Esta arma a distancia gana +" + Mathf.RoundToInt(GetWeaponDamageValue(rarity) * 100f) + "% de daño.";
-
-            case "ranged_weapon_speed":
-                return "Esta arma a distancia reduce su cooldown en " + GetWeaponRangedCooldownReductionValue(rarity).ToString("0.##") + " segundos.";
-
-            case "ranged_weapon_range":
-                return "Esta arma a distancia gana +" + GetWeaponRangedRangeValue(rarity).ToString("0.##") + " de alcance.";
-
-            case "ranged_weapon_projectile_speed":
-                return "Los proyectiles de esta arma vuelan +" + Mathf.RoundToInt(GetWeaponProjectileSpeedValue(rarity) * 100f) + "% más rápido.";
-        }
-
-        return fallbackDescription;
     }
 
     UpgradeOption CreateRolledGeneralUpgrade(List<string> normalGeneralPool, List<string> legendaryOnlyPool)
@@ -303,9 +276,6 @@ public class LevelUpManager : MonoBehaviour
     List<string> CreateLegendaryOnlyUpgradePool()
     {
         List<string> pool = new List<string>();
-
-        // Regeneración ahora sí es una mejora especial legendaria real.
-        pool.Add("regen");
 
         if (weaponManager != null && weaponManager.HasActiveWeaponWithTag(WeaponTag.Projectile))
         {
@@ -395,10 +365,25 @@ public class LevelUpManager : MonoBehaviour
     {
         waitingForChoice = false;
         choosingWeapon = false;
-        Time.timeScale = 1f;
 
         currentOptions.Clear();
         currentWeaponOptions.Clear();
+
+        if (NightPreparationManager.Instance != null)
+        {
+            if (NightPreparationManager.Instance.TryOpenPendingNightPreparation())
+            {
+                return;
+            }
+
+            if (NightPreparationManager.Instance.IsPreparationOpen())
+            {
+                Time.timeScale = 0f;
+                return;
+            }
+        }
+
+        Time.timeScale = 1f;
     }
 
     void RerollUpgrades()
@@ -461,7 +446,7 @@ public class LevelUpManager : MonoBehaviour
                 break;
 
             case "movespeed":
-                stats.moveSpeed += GetMoveSpeedValue(option.rarity);
+                stats.moveSpeed *= 1f + GetGeneralValue(option.rarity);
                 break;
 
             case "critchance":
@@ -473,11 +458,11 @@ public class LevelUpManager : MonoBehaviour
                 break;
 
             case "pickup":
-                stats.pickupRange += GetPickupValue(option.rarity);
+                stats.pickupRange *= 1f + GetGeneralValue(option.rarity);
                 break;
 
             case "maxhealth":
-                int hpGain = GetHealthValue(option.rarity);
+                int hpGain = Mathf.Max(1, Mathf.RoundToInt(stats.maxHealth * GetGeneralValue(option.rarity)));
                 stats.maxHealth += hpGain;
 
                 if (health != null)
@@ -499,7 +484,7 @@ public class LevelUpManager : MonoBehaviour
                 break;
 
             case "xpboost":
-                stats.xpMultiplier += GetXPBoostValue(option.rarity);
+                stats.xpMultiplier += GetGeneralValue(option.rarity);
                 break;
 
             case "luck":
@@ -547,7 +532,6 @@ public class LevelUpManager : MonoBehaviour
             "critmulti",
             "pickup",
             "maxhealth",
-            "armor",
             "dodge",
             "xpboost",
             "luck"
@@ -607,7 +591,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Daño general",
-                    "Aumenta todo tu daño en +" + Mathf.RoundToInt(GetDamageValue(rarity) * 100f) + "%.",
+                    "Todo tu daño +" + GetGeneralPercent(rarity) + "%.",
                     rarity
                 );
 
@@ -615,7 +599,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Daño melee",
-                    "Tus armas melee hacen +" + Mathf.RoundToInt(GetTypeDamageValue(rarity) * 100f) + "% de daño.",
+                    "Daño melee +" + GetTypePercent(rarity) + "%.",
                     rarity
                 );
 
@@ -623,7 +607,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Daño a distancia",
-                    "Tus armas a distancia hacen +" + Mathf.RoundToInt(GetTypeDamageValue(rarity) * 100f) + "% de daño.",
+                    "Daño a distancia +" + GetTypePercent(rarity) + "%.",
                     rarity
                 );
 
@@ -631,7 +615,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Daño mágico",
-                    "Tus armas mágicas hacen +" + Mathf.RoundToInt(GetTypeDamageValue(rarity) * 100f) + "% de daño.",
+                    "Daño mágico +" + GetTypePercent(rarity) + "%.",
                     rarity
                 );
 
@@ -639,7 +623,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Velocidad de ataque",
-                    "Tus armas atacan +" + Mathf.RoundToInt(GetAttackSpeedValue(rarity) * 100f) + "% más rápido.",
+                    "Tus armas atacan +" + GetGeneralPercent(rarity) + "% más rápido.",
                     rarity
                 );
 
@@ -647,7 +631,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Velocidad",
-                    "Te mueves +" + GetMoveSpeedValue(rarity).ToString("0.##") + " más rápido.",
+                    "Te mueves +" + GetGeneralPercent(rarity) + "% más rápido.",
                     rarity
                 );
 
@@ -655,7 +639,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Crítico",
-                    "Aumenta tu probabilidad de crítico en +" + Mathf.RoundToInt(GetCritChanceValue(rarity) * 100f) + "%.",
+                    "Probabilidad crítica +" + GetGeneralPercent(rarity) + "%.",
                     rarity
                 );
 
@@ -663,7 +647,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Daño crítico",
-                    "Aumenta el multiplicador crítico en +" + GetCritMultiValue(rarity).ToString("0.##") + ".",
+                    "Daño crítico +" + GetGeneralPercent(rarity) + "%.",
                     rarity
                 );
 
@@ -671,7 +655,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Recogida",
-                    "Aumenta el rango de recogida en +" + GetPickupValue(rarity).ToString("0.##") + ".",
+                    "Rango de recogida +" + GetGeneralPercent(rarity) + "%.",
                     rarity
                 );
 
@@ -679,7 +663,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Vida máxima",
-                    "Aumenta tu vida máxima en +" + GetHealthValue(rarity) + " y te cura esa cantidad.",
+                    "Vida máxima +" + GetGeneralPercent(rarity) + "%.",
                     rarity
                 );
 
@@ -711,7 +695,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Experiencia",
-                    "Ganas +" + Mathf.RoundToInt(GetXPBoostValue(rarity) * 100f) + "% experiencia.",
+                    "Experiencia ganada +" + GetGeneralPercent(rarity) + "%.",
                     rarity
                 );
 
@@ -719,24 +703,24 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Suerte",
-                    "Ganas +" + GetLuckValue(rarity).ToString("0.##") + " suerte.",
+                    "Suerte +" + Mathf.RoundToInt(GetLuckValue(rarity) * 100f) + "%.",
                     rarity
                 );
 
             case "fire":
-                return new UpgradeOption(id, GetRarityPrefix(rarity) + " Fuego", "Tus efectos de fuego ganan +" + Mathf.RoundToInt(GetElementDamageValue(rarity) * 100f) + "% daño.", rarity);
+                return new UpgradeOption(id, GetRarityPrefix(rarity) + " Fuego", "Fuego +" + GetTypePercent(rarity) + "% de daño.", rarity);
 
             case "poison":
-                return new UpgradeOption(id, GetRarityPrefix(rarity) + " Veneno", "Tus efectos de veneno ganan +" + Mathf.RoundToInt(GetElementDamageValue(rarity) * 100f) + "% daño.", rarity);
+                return new UpgradeOption(id, GetRarityPrefix(rarity) + " Veneno", "Veneno +" + GetTypePercent(rarity) + "% de daño.", rarity);
 
             case "bleed":
-                return new UpgradeOption(id, GetRarityPrefix(rarity) + " Sangrado", "Tus efectos de sangrado ganan +" + Mathf.RoundToInt(GetElementDamageValue(rarity) * 100f) + "% daño.", rarity);
+                return new UpgradeOption(id, GetRarityPrefix(rarity) + " Sangrado", "Sangrado +" + GetTypePercent(rarity) + "% de daño.", rarity);
 
             case "meleerange":
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Área de ataque",
-                    "Aumenta el rango de tus ataques cercanos y auras en +" + GetMeleeRangeValue(rarity).ToString("0.##") + ".",
+                    "Radio de área +" + GetTypePercent(rarity) + "%.",
                     rarity
                 );
 
@@ -744,7 +728,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Velocidad de proyectil",
-                    "Tus proyectiles ganan +" + Mathf.RoundToInt(GetProjectileSpeedValue(rarity) * 100f) + "% velocidad.",
+                    "Velocidad de proyectil +" + GetTypePercent(rarity) + "%.",
                     rarity
                 );
 
@@ -821,13 +805,32 @@ public class LevelUpManager : MonoBehaviour
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 0.04f;
-            case UpgradeRarity.Rare: return 0.07f;
-            case UpgradeRarity.Epic: return 0.10f;
+            case UpgradeRarity.Common: return 0.05f;
+            case UpgradeRarity.Rare: return 0.08f;
+            case UpgradeRarity.Epic: return 0.12f;
             case UpgradeRarity.Legendary: return 0.15f;
         }
 
         return 0.05f;
+    }
+
+
+    float GetGeneralValue(UpgradeRarity rarity)
+    {
+        switch (rarity)
+        {
+            case UpgradeRarity.Common: return 0.05f;
+            case UpgradeRarity.Rare: return 0.08f;
+            case UpgradeRarity.Epic: return 0.12f;
+            case UpgradeRarity.Legendary: return 0.15f;
+        }
+
+        return 0.05f;
+    }
+
+    int GetGeneralPercent(UpgradeRarity rarity)
+    {
+        return Mathf.RoundToInt(GetGeneralValue(rarity) * 100f);
     }
 
     float GetTypeDamageValue(UpgradeRarity rarity)
@@ -835,25 +838,31 @@ public class LevelUpManager : MonoBehaviour
         switch (rarity)
         {
             case UpgradeRarity.Common: return 0.08f;
-            case UpgradeRarity.Rare: return 0.15f;
-            case UpgradeRarity.Epic: return 0.25f;
-            case UpgradeRarity.Legendary: return 0.40f;
+            case UpgradeRarity.Rare: return 0.12f;
+            case UpgradeRarity.Epic: return 0.16f;
+            case UpgradeRarity.Legendary: return 0.20f;
         }
 
         return 0.08f;
+    }
+
+
+    int GetTypePercent(UpgradeRarity rarity)
+    {
+        return Mathf.RoundToInt(GetTypeDamageValue(rarity) * 100f);
     }
 
     float GetAttackSpeedValue(UpgradeRarity rarity)
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 0.07f;
-            case UpgradeRarity.Rare: return 0.12f;
-            case UpgradeRarity.Epic: return 0.20f;
-            case UpgradeRarity.Legendary: return 0.30f;
+            case UpgradeRarity.Common: return 0.05f;
+            case UpgradeRarity.Rare: return 0.08f;
+            case UpgradeRarity.Epic: return 0.12f;
+            case UpgradeRarity.Legendary: return 0.15f;
         }
 
-        return 0.10f;
+        return 0.05f;
     }
 
     float GetMoveSpeedValue(UpgradeRarity rarity)
@@ -873,26 +882,26 @@ public class LevelUpManager : MonoBehaviour
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 0.03f;
-            case UpgradeRarity.Rare: return 0.05f;
-            case UpgradeRarity.Epic: return 0.07f;
-            case UpgradeRarity.Legendary: return 0.10f;
+            case UpgradeRarity.Common: return 0.05f;
+            case UpgradeRarity.Rare: return 0.08f;
+            case UpgradeRarity.Epic: return 0.12f;
+            case UpgradeRarity.Legendary: return 0.15f;
         }
 
-        return 0.02f;
+        return 0.05f;
     }
 
     float GetCritMultiValue(UpgradeRarity rarity)
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 0.15f;
-            case UpgradeRarity.Rare: return 0.30f;
-            case UpgradeRarity.Epic: return 0.50f;
-            case UpgradeRarity.Legendary: return 0.75f;
+            case UpgradeRarity.Common: return 0.05f;
+            case UpgradeRarity.Rare: return 0.08f;
+            case UpgradeRarity.Epic: return 0.12f;
+            case UpgradeRarity.Legendary: return 0.15f;
         }
 
-        return 0.15f;
+        return 0.05f;
     }
 
     float GetPickupValue(UpgradeRarity rarity)
@@ -945,8 +954,8 @@ public class LevelUpManager : MonoBehaviour
         {
             case UpgradeRarity.Common: return 0.02f;
             case UpgradeRarity.Rare: return 0.04f;
-            case UpgradeRarity.Epic: return 0.07f;
-            case UpgradeRarity.Legendary: return 0.10f;
+            case UpgradeRarity.Epic: return 0.06f;
+            case UpgradeRarity.Legendary: return 0.08f;
         }
 
         return 0.02f;
@@ -956,26 +965,26 @@ public class LevelUpManager : MonoBehaviour
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 0.15f;
-            case UpgradeRarity.Rare: return 0.30f;
-            case UpgradeRarity.Epic: return 0.50f;
-            case UpgradeRarity.Legendary: return 0.75f;
+            case UpgradeRarity.Common: return 0.05f;
+            case UpgradeRarity.Rare: return 0.08f;
+            case UpgradeRarity.Epic: return 0.12f;
+            case UpgradeRarity.Legendary: return 0.15f;
         }
 
-        return 0.15f;
+        return 0.05f;
     }
 
     float GetLuckValue(UpgradeRarity rarity)
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 1f;
-            case UpgradeRarity.Rare: return 2f;
-            case UpgradeRarity.Epic: return 3f;
-            case UpgradeRarity.Legendary: return 5f;
+            case UpgradeRarity.Common: return 0.05f;
+            case UpgradeRarity.Rare: return 0.08f;
+            case UpgradeRarity.Epic: return 0.12f;
+            case UpgradeRarity.Legendary: return 0.15f;
         }
 
-        return 1f;
+        return 0.05f;
     }
 
     float GetElementDamageValue(UpgradeRarity rarity)
@@ -983,9 +992,9 @@ public class LevelUpManager : MonoBehaviour
         switch (rarity)
         {
             case UpgradeRarity.Common: return 0.08f;
-            case UpgradeRarity.Rare: return 0.15f;
-            case UpgradeRarity.Epic: return 0.25f;
-            case UpgradeRarity.Legendary: return 0.40f;
+            case UpgradeRarity.Rare: return 0.12f;
+            case UpgradeRarity.Epic: return 0.16f;
+            case UpgradeRarity.Legendary: return 0.20f;
         }
 
         return 0.08f;
@@ -995,26 +1004,26 @@ public class LevelUpManager : MonoBehaviour
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 0.15f;
-            case UpgradeRarity.Rare: return 0.30f;
-            case UpgradeRarity.Epic: return 0.45f;
-            case UpgradeRarity.Legendary: return 0.70f;
+            case UpgradeRarity.Common: return 0.08f;
+            case UpgradeRarity.Rare: return 0.12f;
+            case UpgradeRarity.Epic: return 0.16f;
+            case UpgradeRarity.Legendary: return 0.20f;
         }
 
-        return 0.15f;
+        return 0.08f;
     }
 
     float GetProjectileSpeedValue(UpgradeRarity rarity)
     {
         switch (rarity)
         {
-            case UpgradeRarity.Common: return 0.10f;
-            case UpgradeRarity.Rare: return 0.20f;
-            case UpgradeRarity.Epic: return 0.35f;
-            case UpgradeRarity.Legendary: return 0.50f;
+            case UpgradeRarity.Common: return 0.08f;
+            case UpgradeRarity.Rare: return 0.12f;
+            case UpgradeRarity.Epic: return 0.16f;
+            case UpgradeRarity.Legendary: return 0.20f;
         }
 
-        return 0.10f;
+        return 0.08f;
     }
 
     int GetProjectileCountValue(UpgradeRarity rarity)
@@ -1035,83 +1044,6 @@ public class LevelUpManager : MonoBehaviour
         return 0.03f;
     }
 
-    float GetWeaponDamageValue(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.10f;
-            case UpgradeRarity.Rare: return 0.18f;
-            case UpgradeRarity.Epic: return 0.30f;
-            case UpgradeRarity.Legendary: return 0.45f;
-        }
-
-        return 0.10f;
-    }
-
-    float GetWeaponRangeValue(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.15f;
-            case UpgradeRarity.Rare: return 0.25f;
-            case UpgradeRarity.Epic: return 0.40f;
-            case UpgradeRarity.Legendary: return 0.65f;
-        }
-
-        return 0.15f;
-    }
-
-    float GetWeaponCooldownReductionValue(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.10f;
-            case UpgradeRarity.Rare: return 0.16f;
-            case UpgradeRarity.Epic: return 0.25f;
-            case UpgradeRarity.Legendary: return 0.40f;
-        }
-
-        return 0.10f;
-    }
-
-    float GetWeaponRangedCooldownReductionValue(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.05f;
-            case UpgradeRarity.Rare: return 0.08f;
-            case UpgradeRarity.Epic: return 0.13f;
-            case UpgradeRarity.Legendary: return 0.20f;
-        }
-
-        return 0.05f;
-    }
-
-    float GetWeaponRangedRangeValue(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.7f;
-            case UpgradeRarity.Rare: return 1.2f;
-            case UpgradeRarity.Epic: return 2f;
-            case UpgradeRarity.Legendary: return 3f;
-        }
-
-        return 0.7f;
-    }
-
-    float GetWeaponProjectileSpeedValue(UpgradeRarity rarity)
-    {
-        switch (rarity)
-        {
-            case UpgradeRarity.Common: return 0.15f;
-            case UpgradeRarity.Rare: return 0.25f;
-            case UpgradeRarity.Epic: return 0.40f;
-            case UpgradeRarity.Legendary: return 0.65f;
-        }
-
-        return 0.15f;
-    }
 }
 
 public enum UpgradeRarity

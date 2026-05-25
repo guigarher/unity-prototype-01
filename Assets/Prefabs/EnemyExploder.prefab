@@ -56,11 +56,15 @@ MonoBehaviour:
   currentHealth: 0
   scaleHealthWithDifficulty: 0
   healthScalingStrength: 0.15
-  xpOrbPrefab: {fileID: 7341363948313262901, guid: a15711f9b8be3fd4ab45a8c77bdfeb73, type: 3}
-  xpOrbCount: 1
+  xpValue: 300
+  blueXpOrbPrefab: {fileID: 7341363948313262901, guid: a15711f9b8be3fd4ab45a8c77bdfeb73, type: 3}
+  blueXpOrbValue: 100
+  purpleXpOrbPrefab: {fileID: 7341363948313262901, guid: 1253a84476f9eb8408319832cea0b605, type: 3}
+  purpleXpOrbValue: 200
+  xpDropSpread: 0.5
   coinPrefab: {fileID: 889489848073716753, guid: 6750fc732abb4df4f9df36afd9a689a2, type: 3}
-  coinDropChance: 0.1
-  coinDropCount: 1
+  coinDropChance: 1
+  coinDropCount: 2
   damagePopupPrefab: {fileID: 3726461286995920600, guid: c5ddf32853a7e4145a617f2c4a80899e, type: 3}
   popupOffset: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1549311857094923421
