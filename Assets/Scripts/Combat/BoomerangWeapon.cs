@@ -34,8 +34,9 @@ public class BoomerangWeapon : WeaponBase
     public float bleedChance = 0.7f;
 
     [Header("Control")]
-    public bool allowOnlyOneBoomerang = true;
+    public bool allowOnlyOneBoomerang = false;
     public bool useProjectileCountBonus = false;
+    public int baseMaxActiveBoomerangs = 3;
 
     [Header("Memoria de dirección")]
     public float directionChangeGraceTime = 0.02f;
@@ -73,6 +74,13 @@ public class BoomerangWeapon : WeaponBase
 
         UpdateThrowDirectionMemory();
 
+        attackTimer -= Time.deltaTime;
+
+        if (attackTimer > 0f)
+        {
+            return;
+        }
+
         int maxBoomerangs = GetMaxActiveBoomerangs();
 
         if (activeBoomerangs >= maxBoomerangs)
@@ -80,24 +88,24 @@ public class BoomerangWeapon : WeaponBase
             return;
         }
 
-        attackTimer -= Time.deltaTime;
+        bool thrown = TryThrowBoomerang();
 
-        if (attackTimer <= 0f)
+        if (thrown)
         {
-            bool thrown = TryThrowBoomerang();
-
-            if (thrown)
-            {
-                attackTimer = GetCurrentCooldown();
-            }
+            attackTimer = GetCurrentCooldown();
         }
     }
 
     int GetMaxActiveBoomerangs()
     {
-        int maxBoomerangs = 1;
+        if (allowOnlyOneBoomerang)
+        {
+            return 1;
+        }
 
-        if (!allowOnlyOneBoomerang && useProjectileCountBonus && playerStats != null)
+        int maxBoomerangs = baseMaxActiveBoomerangs;
+
+        if (useProjectileCountBonus && playerStats != null)
         {
             maxBoomerangs += playerStats.projectileCountBonus;
         }
@@ -367,6 +375,13 @@ public class BoomerangWeapon : WeaponBase
                 weaponBleedDamageMultiplier += bonus;
                 break;
         }
+
+        Debug.Log(
+            "BOOMERANG DEBUG | speed=" + weaponAttackSpeedMultiplier +
+            " | size=" + weaponSizeMultiplier +
+            " | finalHitRadius=" + GetFinalHitRadius() +
+            " | cooldown=" + GetCurrentCooldown()
+        );
 
         LevelUp();
 
