@@ -47,7 +47,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (stats != null)
         {
-            finalMoveSpeed = stats.moveSpeed;
+            finalMoveSpeed = stats.moveSpeed * stats.contactSlowMultiplier;
         }
 
         rb.linearVelocity = movement * finalMoveSpeed;

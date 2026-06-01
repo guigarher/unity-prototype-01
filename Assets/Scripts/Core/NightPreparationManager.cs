@@ -37,6 +37,7 @@ public class NightPreparationManager : MonoBehaviour
     private float temporaryDamageBonus = 0f;
     private float temporaryAttackSpeedBonus = 0f;
     private float temporaryCritChanceBonus = 0f;
+    private float temporaryCritMultiplierBonus = 0f;
     private float temporaryDodgeChanceBonus = 0f;
     private float temporaryAreaRangeBonus = 0f;
     private float temporaryProjectileSpeedBonus = 0f;
@@ -79,12 +80,6 @@ public class NightPreparationManager : MonoBehaviour
         if (Keyboard.current.digit1Key.wasPressedThisFrame) TryBuyOption(0);
         if (Keyboard.current.digit2Key.wasPressedThisFrame) TryBuyOption(1);
         if (Keyboard.current.digit3Key.wasPressedThisFrame) TryBuyOption(2);
-        if (Keyboard.current.digit4Key.wasPressedThisFrame) TryBuyOption(3);
-
-        if (Keyboard.current.rKey.wasPressedThisFrame)
-        {
-            TryRepairBase();
-        }
 
         if (Keyboard.current.fKey.wasPressedThisFrame)
         {
@@ -187,12 +182,11 @@ public class NightPreparationManager : MonoBehaviour
         currentOptions.Add(CreateRandomWoodOption());
         currentOptions.Add(CreateRandomStoneOption());
         currentOptions.Add(CreateRandomMixedOption());
-        currentOptions.Add(CreateRandomBaseOption());
     }
 
     NightPreparationOption CreateRandomWoodOption()
     {
-        int roll = Random.Range(0, 5);
+        int roll = Random.Range(0, 6);
 
         switch (roll)
         {
@@ -200,14 +194,14 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "wood_damage",
                     "Combustión agresiva",
-                    "NOCHE: +50% daño general.\nPERMANENTE: +5% daño general.",
-                    8,
+                    "NOCHE: +40% daño general.\nPERMANENTE: +4% daño general.",
+                    10,
                     0,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.Damage, 0.50f),
-                        NightEffect.Permanent(NightEffectType.Damage, 0.05f)
+                        NightEffect.Night(NightEffectType.Damage, 0.40f),
+                        NightEffect.Permanent(NightEffectType.Damage, 0.04f)
                     }
                 );
 
@@ -215,44 +209,59 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "wood_attack_speed",
                     "Vapor a presión",
-                    "NOCHE: +50% velocidad de ataque.\nPERMANENTE: +5% velocidad de ataque.",
-                    8,
+                    "NOCHE: +40% velocidad de ataque.\nPERMANENTE: +4% velocidad de ataque.",
+                    10,
                     0,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.AttackSpeed, 0.50f),
-                        NightEffect.Permanent(NightEffectType.AttackSpeed, 0.05f)
+                        NightEffect.Night(NightEffectType.AttackSpeed, 0.40f),
+                        NightEffect.Permanent(NightEffectType.AttackSpeed, 0.04f)
                     }
                 );
 
             case 2:
                 return new NightPreparationOption(
-                    "wood_crit",
+                    "wood_crit_chance",
                     "Mira de latón",
-                    "NOCHE: +50% probabilidad crítica.\nPERMANENTE: +5% probabilidad crítica.",
-                    7,
+                    "NOCHE: +40% probabilidad crítica.\nPERMANENTE: +4% probabilidad crítica.",
+                    10,
                     0,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.CritChance, 0.50f),
-                        NightEffect.Permanent(NightEffectType.CritChance, 0.05f)
+                        NightEffect.Night(NightEffectType.CritChance, 0.40f),
+                        NightEffect.Permanent(NightEffectType.CritChance, 0.04f)
                     }
                 );
 
             case 3:
                 return new NightPreparationOption(
-                    "wood_area",
-                    "Guadaña expansiva",
-                    "NOCHE: +50% radio de área.\nPERMANENTE: +5% radio de área.",
-                    7,
+                    "wood_crit_damage",
+                    "Engranajes afilados",
+                    "NOCHE: +40% daño crítico.\nPERMANENTE: +4% daño crítico.",
+                    10,
                     0,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.AreaRange, 0.50f),
-                        NightEffect.Permanent(NightEffectType.AreaRange, 0.05f)
+                        NightEffect.Night(NightEffectType.CritMultiplier, 0.40f),
+                        NightEffect.Permanent(NightEffectType.CritMultiplier, 0.04f)
+                    }
+                );
+
+            case 4:
+                return new NightPreparationOption(
+                    "wood_area",
+                    "Guadaña expansiva",
+                    "NOCHE: +40% radio de área.\nPERMANENTE: +4% radio de área.",
+                    10,
+                    0,
+                    0,
+                    new List<NightEffect>
+                    {
+                        NightEffect.Night(NightEffectType.AreaRange, 0.40f),
+                        NightEffect.Permanent(NightEffectType.AreaRange, 0.04f)
                     }
                 );
 
@@ -275,7 +284,7 @@ public class NightPreparationManager : MonoBehaviour
 
     NightPreparationOption CreateRandomStoneOption()
     {
-        int roll = Random.Range(0, 4);
+        int roll = Random.Range(0, 3);
 
         switch (roll)
         {
@@ -285,7 +294,7 @@ public class NightPreparationManager : MonoBehaviour
                     "Reflejos minerales",
                     "NOCHE: +20% esquiva.\nPERMANENTE: +2% esquiva.",
                     0,
-                    7,
+                    10,
                     0,
                     new List<NightEffect>
                     {
@@ -298,45 +307,29 @@ public class NightPreparationManager : MonoBehaviour
                 return new NightPreparationOption(
                     "stone_damage_reduction",
                     "Blindaje temporal",
-                    "NOCHE: -50% daño recibido.\nPERMANENTE: +5% vida máxima.",
+                    "NOCHE: -40% daño recibido.\nPERMANENTE: +4% vida máxima.",
                     0,
-                    8,
-                    0,
-                    new List<NightEffect>
-                    {
-                        NightEffect.Night(NightEffectType.DamageReduction, 0.50f),
-                        NightEffect.Permanent(NightEffectType.MaxHealthPercent, 0.05f)
-                    }
-                );
-
-            case 2:
-                return new NightPreparationOption(
-                    "stone_health",
-                    "Corazón reforzado",
-                    "NOCHE: +50% vida máxima.\nPERMANENTE: +5% vida máxima.",
-                    0,
-                    8,
+                    10,
                     0,
                     new List<NightEffect>
                     {
-                        NightEffect.Permanent(NightEffectType.MaxHealthPercent, 0.05f),
-                        NightEffect.Night(NightEffectType.MaxHealthPercent, 0.50f)
+                        NightEffect.Night(NightEffectType.DamageReduction, 0.40f),
+                        NightEffect.Permanent(NightEffectType.MaxHealthPercent, 0.04f)
                     }
                 );
 
             default:
                 return new NightPreparationOption(
-                    "stone_defense_mix",
-                    "Instinto defensivo",
-                    "NOCHE: +10% esquiva y +25% vida máxima.\nPERMANENTE: +5% vida máxima.",
+                    "stone_health",
+                    "Corazón reforzado",
+                    "NOCHE: +40% vida máxima.\nPERMANENTE: +4% vida máxima.",
                     0,
-                    9,
-                    0,                 
+                    10,
+                    0,
                     new List<NightEffect>
                     {
-                        NightEffect.Night(NightEffectType.DodgeChance, 0.10f),
-                        NightEffect.Permanent(NightEffectType.MaxHealthPercent, 0.05f),
-                        NightEffect.Night(NightEffectType.MaxHealthPercent, 0.25f)
+                        NightEffect.Permanent(NightEffectType.MaxHealthPercent, 0.04f),
+                        NightEffect.Night(NightEffectType.MaxHealthPercent, 0.40f)
                     }
                 );
         }
@@ -346,44 +339,22 @@ public class NightPreparationManager : MonoBehaviour
     {
         List<NightEffect> effects = new List<NightEffect>();
 
-        string title;
-        string description;
+        string title = "Motor de vapor inestable";
+        string description =
+            "NOCHE: +30% velocidad de movimiento.\n" +
+            "PERMANENTE: +3% velocidad de movimiento.";
 
-        bool useRegen = Random.value < 0.5f;
-
-        if (useRegen)
-        {
-            title = "Sistema hidráulico inestable";
-            description =
-                "NOCHE: regeneras 2% de tu vida máxima por segundo.\n" +
-                "PERMANENTE: +5% vida máxima.";
-
-            effects.Add(NightEffect.Permanent(NightEffectType.MaxHealthPercent, 0.05f));
-            effects.Add(NightEffect.Night(NightEffectType.HealthRegenPercent, 0.02f));
-        }
-        else
-        {
-            title = "Motor de vapor ligero";
-            description =
-                "NOCHE: +30% velocidad de movimiento.\n" +
-                "PERMANENTE: +3% velocidad de movimiento.";
-
-            effects.Add(NightEffect.Permanent(NightEffectType.MoveSpeedPercent, 0.03f));
-            effects.Add(NightEffect.Night(NightEffectType.MoveSpeedPercent, 0.30f));
-        }
+        effects.Add(NightEffect.Permanent(NightEffectType.MoveSpeedPercent, 0.03f));
+        effects.Add(NightEffect.Night(NightEffectType.MoveSpeedPercent, 0.30f));
 
         NightEffect offensiveNight;
         NightEffect offensivePermanent;
         string offensiveText;
-        int extraWoodCost;
-        int extraStoneCost;
 
         CreateReducedOffensiveEffect(
             out offensiveNight,
             out offensivePermanent,
-            out offensiveText,
-            out extraWoodCost,
-            out extraStoneCost
+            out offensiveText
         );
 
         NightEffect defensiveNight;
@@ -408,8 +379,8 @@ public class NightPreparationManager : MonoBehaviour
             "mixed_generated",
             title,
             description,
-            6 + extraWoodCost,
-            6 + extraStoneCost,
+            15,
+            15,
             0,
             effects
         );
@@ -418,48 +389,41 @@ public class NightPreparationManager : MonoBehaviour
     void CreateReducedOffensiveEffect(
         out NightEffect night,
         out NightEffect permanent,
-        out string text,
-        out int extraWoodCost,
-        out int extraStoneCost
+        out string text
     )
     {
-        extraWoodCost = 0;
-        extraStoneCost = 0;
-
         int roll = Random.Range(0, 5);
 
         switch (roll)
         {
             case 0:
-                night = NightEffect.Night(NightEffectType.Damage, 0.30f);
-                permanent = NightEffect.Permanent(NightEffectType.Damage, 0.03f);
-                text = "EXTRA OFENSIVO: +30% daño esta noche y +3% daño permanente.";
+                night = NightEffect.Night(NightEffectType.Damage, 0.20f);
+                permanent = NightEffect.Permanent(NightEffectType.Damage, 0.02f);
+                text = "EXTRA OFENSIVO: +20% daño esta noche y +2% daño permanente.";
                 return;
 
             case 1:
-                night = NightEffect.Night(NightEffectType.AttackSpeed, 0.30f);
-                permanent = NightEffect.Permanent(NightEffectType.AttackSpeed, 0.03f);
-                text = "EXTRA OFENSIVO: +30% velocidad de ataque esta noche y +3% permanente.";
+                night = NightEffect.Night(NightEffectType.AttackSpeed, 0.20f);
+                permanent = NightEffect.Permanent(NightEffectType.AttackSpeed, 0.02f);
+                text = "EXTRA OFENSIVO: +20% velocidad de ataque esta noche y +2% permanente.";
                 return;
 
             case 2:
-                night = NightEffect.Night(NightEffectType.CritChance, 0.30f);
-                permanent = NightEffect.Permanent(NightEffectType.CritChance, 0.03f);
-                text = "EXTRA OFENSIVO: +30% crítico esta noche y +3% crítico permanente.";
+                night = NightEffect.Night(NightEffectType.CritChance, 0.20f);
+                permanent = NightEffect.Permanent(NightEffectType.CritChance, 0.02f);
+                text = "EXTRA OFENSIVO: +20% probabilidad crítica esta noche y +2% permanente.";
                 return;
 
             case 3:
-                night = NightEffect.Night(NightEffectType.AreaRange, 0.30f);
-                permanent = NightEffect.Permanent(NightEffectType.AreaRange, 0.03f);
-                text = "EXTRA OFENSIVO: +30% radio de área esta noche y +3% permanente.";
+                night = NightEffect.Night(NightEffectType.CritMultiplier, 0.20f);
+                permanent = NightEffect.Permanent(NightEffectType.CritMultiplier, 0.02f);
+                text = "EXTRA OFENSIVO: +20% daño crítico esta noche y +2% permanente.";
                 return;
 
             default:
-                night = NightEffect.Night(NightEffectType.ProjectileCount, 1f);
-                permanent = NightEffect.Permanent(NightEffectType.ProjectileSpeed, 0.03f);
-                text = "EXTRA OFENSIVO: +1 proyectil esta noche y +3% velocidad de proyectil permanente.";
-                extraWoodCost = 2;
-                extraStoneCost = 1;
+                night = NightEffect.Night(NightEffectType.AreaRange, 0.20f);
+                permanent = NightEffect.Permanent(NightEffectType.AreaRange, 0.02f);
+                text = "EXTRA OFENSIVO: +20% radio de área esta noche y +2% permanente.";
                 return;
         }
     }
@@ -481,15 +445,15 @@ public class NightPreparationManager : MonoBehaviour
                 return;
 
             case 1:
-                night = NightEffect.Night(NightEffectType.DamageReduction, 0.30f);
-                permanent = NightEffect.Permanent(NightEffectType.MaxHealthPercent, 0.03f);
-                text = "EXTRA DEFENSIVO: -30% daño recibido esta noche y +3% vida máxima permanente.";
+                night = NightEffect.Night(NightEffectType.DamageReduction, 0.20f);
+                permanent = NightEffect.Permanent(NightEffectType.MaxHealthPercent, 0.02f);
+                text = "EXTRA DEFENSIVO: -20% daño recibido esta noche y +2% vida máxima permanente.";
                 return;
 
             default:
-                night = NightEffect.Night(NightEffectType.MaxHealthPercent, 0.30f);
-                permanent = NightEffect.Permanent(NightEffectType.MaxHealthPercent, 0.03f);
-                text = "EXTRA DEFENSIVO: +30% vida máxima esta noche y +3% vida máxima permanente.";
+                night = NightEffect.Night(NightEffectType.MaxHealthPercent, 0.20f);
+                permanent = NightEffect.Permanent(NightEffectType.MaxHealthPercent, 0.02f);
+                text = "EXTRA DEFENSIVO: +20% vida máxima esta noche y +2% vida máxima permanente.";
                 return;
         }
     }
@@ -582,7 +546,6 @@ public class NightPreparationManager : MonoBehaviour
             );
         }
 
-        Debug.Log("R: Reparar base | Coste: " + repairWoodCost + " madera + " + repairStoneCost + " piedra | +" + repairAmount + " vida");
         Debug.Log("F: Reroll opciones | Coste actual: " + currentRerollCost + " oro");
         Debug.Log("ENTER: Empezar la noche");
     }
@@ -663,6 +626,11 @@ public class NightPreparationManager : MonoBehaviour
             case NightEffectType.CritChance:
                 playerStats.critChance = Mathf.Min(1f, playerStats.critChance + effect.value);
                 if (!effect.isPermanent) temporaryCritChanceBonus += effect.value;
+                break;
+
+            case NightEffectType.CritMultiplier:
+                playerStats.critMultiplier += effect.value;
+                if (!effect.isPermanent) temporaryCritMultiplierBonus += effect.value;
                 break;
 
             case NightEffectType.DodgeChance:
@@ -870,11 +838,30 @@ public class NightPreparationManager : MonoBehaviour
             return;
         }
 
-        GenerateNightOptions();
+        for (int i = 0; i < currentOptions.Count; i++)
+        {
+            if (currentOptions[i].purchased)
+            {
+                continue;
+            }
+
+            if (i == 0)
+            {
+                currentOptions[i] = CreateRandomWoodOption();
+            }
+            else if (i == 1)
+            {
+                currentOptions[i] = CreateRandomStoneOption();
+            }
+            else if (i == 2)
+            {
+                currentOptions[i] = CreateRandomMixedOption();
+            }
+        }
 
         currentRerollCost += rerollCostIncrease;
 
-        Debug.Log("Reroll nocturno realizado. Nuevo coste: " + currentRerollCost);
+        Debug.Log("Reroll nocturno realizado. Las compras ya realizadas no han cambiado. Nuevo coste: " + currentRerollCost);
         ShowNightPreparationInConsole();
     }
 
@@ -897,6 +884,7 @@ public class NightPreparationManager : MonoBehaviour
         playerStats.damageMultiplier -= temporaryDamageBonus;
         playerStats.attackSpeedMultiplier -= temporaryAttackSpeedBonus;
         playerStats.critChance -= temporaryCritChanceBonus;
+        playerStats.critMultiplier -= temporaryCritMultiplierBonus;
         playerStats.dodgeChance -= temporaryDodgeChanceBonus;
         playerStats.areaRangeBonus -= temporaryAreaRangeBonus;
         playerStats.projectileSpeedMultiplier -= temporaryProjectileSpeedBonus;
@@ -934,6 +922,7 @@ public class NightPreparationManager : MonoBehaviour
         temporaryDamageBonus = 0f;
         temporaryAttackSpeedBonus = 0f;
         temporaryCritChanceBonus = 0f;
+        temporaryCritMultiplierBonus = 0f;
         temporaryDodgeChanceBonus = 0f;
         temporaryAreaRangeBonus = 0f;
         temporaryProjectileSpeedBonus = 0f;
@@ -961,6 +950,7 @@ public enum NightEffectType
     Damage,
     AttackSpeed,
     CritChance,
+    CritMultiplier,
     DodgeChance,
     AreaRange,
     MeleeRange,

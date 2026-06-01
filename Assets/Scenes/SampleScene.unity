@@ -144,6 +144,7 @@ GameObject:
   - component: {fileID: 164040107}
   - component: {fileID: 164040110}
   - component: {fileID: 164040111}
+  - component: {fileID: 164040112}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -395,6 +396,7 @@ MonoBehaviour:
   armor: 0
   dodgeChance: 0.05
   moveSpeed: 5
+  contactSlowMultiplier: 1
   attackSpeedMultiplier: 1
   damageMultiplier: 1
   cooldownReduction: 0
@@ -546,7 +548,7 @@ MonoBehaviour:
   knockbackForce: 2.5
   knockbackDuration: 0.08
   boomerangProjectilePrefab: {fileID: 6626115528430632748, guid: d11c5af5ed6a502488632fb0ed563bda, type: 3}
-  baseAttackCooldown: 1
+  baseAttackCooldown: 2
   spawnDistance: 0.8
   baseDamage: 150
   flightDuration: 1.5
@@ -561,8 +563,9 @@ MonoBehaviour:
   bleedDuration: 10
   bleedTickInterval: 2
   bleedChance: 1
-  allowOnlyOneBoomerang: 1
+  allowOnlyOneBoomerang: 0
   useProjectileCountBonus: 0
+  baseMaxActiveBoomerangs: 3
   directionChangeGraceTime: 0.02
   commonBonus: 0.1
   rareBonus: 0.15
@@ -606,6 +609,31 @@ MonoBehaviour:
   rareBonus: 0.15
   epicBonus: 0.2
   legendaryBonus: 0.25
+--- !u!114 &164040112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 164040094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b8aa01b986aae140bd759929d0c33a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerEnemyContact
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  contactRadius: 0.55
+  damagePerEnemy: 1
+  damageInterval: 1
+  oneEnemySlowMultiplier: 0.75
+  manyEnemiesSlowMultiplier: 0.55
+  manyEnemiesThreshold: 3
+  damagePopupPrefab: {fileID: 3726461286995920600, guid: c5ddf32853a7e4145a617f2c4a80899e, type: 3}
+  popupOffset: {x: 0, y: 0.6, z: 0}
+  logContactDamage: 1
+  drawDebugGizmo: 1
 --- !u!1 &245605217
 GameObject:
   m_ObjectHideFlags: 0

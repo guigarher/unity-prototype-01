@@ -663,7 +663,7 @@ public class LevelUpManager : MonoBehaviour
                 return new UpgradeOption(
                     id,
                     GetRarityPrefix(rarity) + " Vida máxima",
-                    "Vida máxima +" + GetGeneralPercent(rarity) + "%.",
+                    "Vida máxima +" + GetGeneralPercent(rarity) + "%. También te curas esa cantidad.",
                     rarity
                 );
 

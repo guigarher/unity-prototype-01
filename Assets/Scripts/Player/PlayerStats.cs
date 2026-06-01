@@ -15,6 +15,10 @@ public class PlayerStats : MonoBehaviour
     [Header("Movimiento")]
     public float moveSpeed = 5f;
 
+    [Header("Contacto con enemigos")]
+    [Range(0.1f, 1f)]
+    public float contactSlowMultiplier = 1f;
+
     [Header("Ataque global")]
     public float attackSpeedMultiplier = 1f;
 

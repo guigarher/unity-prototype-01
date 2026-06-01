@@ -254,7 +254,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyRanged
   target: {fileID: 0}
   targetsBaseAtNight: 1
-  moveSpeed: 2
+  moveSpeed: 1.8
   preferredDistance: 5
   tooCloseDistance: 3
   attackRange: 7
@@ -266,7 +266,7 @@ MonoBehaviour:
   projectilePrefab: {fileID: 302465511786859699, guid: 95bbad27b7f99494d836ced0a31c886c, type: 3}
   projectileSpeed: 6
   attackWindUp: 0.45
-  attackCooldown: 2.2
+  attackCooldown: 2.4
   projectileSpawnDistance: 0.6
   damage: 6
   baseDamage: 1

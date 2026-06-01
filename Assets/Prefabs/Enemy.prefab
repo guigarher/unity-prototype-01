@@ -173,7 +173,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMelee
   target: {fileID: 0}
   targetsBaseAtNight: 0
-  moveSpeed: 2.5
+  moveSpeed: 2.2
   separationRadius: 0.6
   separationStrength: 0.6
   enemyLayer:
@@ -182,8 +182,8 @@ MonoBehaviour:
   attackStartRange: 1.8
   attackHitRange: 0.75
   attackHitOffset: 1.25
-  attackWindUp: 0.55
-  attackCooldown: 1
+  attackWindUp: 0.6
+  attackCooldown: 1.4
   attackWarningVisual: {fileID: 5583025449839971847}
   showAttackWarning: 1
   warningStartAlpha: 0.12
