@@ -1669,6 +1669,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &878031698 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2050033927900014311, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+  m_PrefabInstance: {fileID: 1179558337}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &933967843
 GameObject:
   m_ObjectHideFlags: 0
@@ -1698,7 +1703,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2050033926922307366}
+  - {fileID: 878031698}
   m_Father: {fileID: 164040098}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &948235014
@@ -2267,6 +2272,63 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1179558337
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 933967844}
+    m_Modifications:
+    - target: {fileID: 603858065370723497, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+      propertyPath: m_Name
+      value: GalloDownRig_PNG 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2050033927900014311, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2050033927900014311, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2050033927900014311, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2050033927900014311, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2050033927900014311, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2050033927900014311, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2050033927900014311, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2050033927900014311, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2050033927900014311, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2050033927900014311, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: af698eac1eacbdb4fbba70aa2c6d0bf1, type: 3}
 --- !u!1 &1221550146
 GameObject:
   m_ObjectHideFlags: 0
@@ -3585,98 +3647,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!1 &603858066548692328 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3359598344971013184, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-  m_PrefabInstance: {fileID: 5426139481706258715}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &2050033926922307366 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3764673139500858339, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-  m_PrefabInstance: {fileID: 5426139481706258715}
-  m_PrefabAsset: {fileID: 0}
---- !u!95 &2050033926922307367
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 603858066548692328}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 58c1dfa3b62d05a4ca2a9d955203b4a5, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
---- !u!1001 &5426139481706258715
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 933967844}
-    m_Modifications:
-    - target: {fileID: 3359598344971013184, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      propertyPath: m_Name
-      value: GalloDownRig_PNG 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764673139500858339, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764673139500858339, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764673139500858339, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764673139500858339, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764673139500858339, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764673139500858339, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764673139500858339, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764673139500858339, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764673139500858339, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3764673139500858339, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3359598344971013184, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2050033926922307367}
-  m_SourcePrefab: {fileID: 100100000, guid: 5eb4663cbd32f40449e2488407b1adc6, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
